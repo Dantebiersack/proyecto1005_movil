@@ -14,9 +14,9 @@ export default function LoginScreen({ navigation }) {
     <View style={styles.container}>
       <Text style={styles.title}>Bienvenido a NearBiz</Text>
       <Image
-        source={{ uri: 'https://cdn-icons-png.flaticon.com/512/5087/5087579.png' }}
-        style={styles.logo}
-      />
+  source={require('./assets/LogoNearBiz.jpeg')}
+  style={styles.logo}
+/>
 
       <TextInput
         placeholder="Usuario"

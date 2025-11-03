@@ -13,6 +13,8 @@ import {
 } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import * as Location from 'expo-location';
+import Ionicons from "react-native-vector-icons/Ionicons";
+
 
 export default function HomeScreen({ navigation }) {
   const [isDarkMode, setIsDarkMode] = useState(false);
@@ -238,22 +240,29 @@ export default function HomeScreen({ navigation }) {
     >
       {/* HEADER */}
       <View style={styles.header}>
-        <Image
-          source={require('./assets/LogoNearBiz.jpeg')}
-          style={styles.logo}
-        />
-        <Text style={[styles.companyName, themeStyles.text]}>NearBiz</Text>
+  <Image
+    source={require('../../assets/LogoNearBiz.jpeg')}
+    style={styles.logo}
+  />
 
-        <View style={styles.switchContainer}>
-          <Text style={[styles.switchLabel, themeStyles.text]}>
-            {isDarkMode ? '🌙' : '☀️'}
-          </Text>
-          <Switch
-            value={isDarkMode}
-            onValueChange={() => setIsDarkMode(!isDarkMode)}
-          />
-        </View>
-      </View>
+  <Text style={[styles.companyName, themeStyles.text]}>
+    NearBiz
+  </Text>
+
+  <TouchableOpacity 
+    style={styles.themeButton}
+    onPress={() => setIsDarkMode(!isDarkMode)}
+  >
+   <Ionicons
+  name={isDarkMode ? "moon" : "sunny"}
+  size={28}
+  color={isDarkMode ? "#fff" : "#000"}
+/>
+
+  </TouchableOpacity>
+</View>
+
+
 
       {/* UBICACIÓN */}
       <View style={styles.locationSection}>
@@ -329,7 +338,8 @@ export default function HomeScreen({ navigation }) {
             style={styles.clearFiltersButton}
             onPress={limpiarFiltros}
           >
-            <Text style={styles.clearFiltersText}>🗑️ Limpiar filtros</Text>
+              <Ionicons name="trash" size={20} color="#fff" style={{ marginRight: 6 }} />
+            <Text style={styles.clearFiltersText}>Limpiar filtros</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -468,6 +478,10 @@ const styles = StyleSheet.create({
   logo: { width: 60, height: 60, borderRadius: 10 },
   companyName: { fontSize: 22, fontWeight: 'bold', flex: 1, marginLeft: 10 },
   switchContainer: { flexDirection: 'row', alignItems: 'center' },
+  switchIcon: {
+  fontSize: 28,   // Tamaño del ícono
+  marginLeft: 10, // Espaciado respecto al texto 
+},
   switchLabel: { marginRight: 6, fontSize: 18 },
   locationSection: { marginBottom: 15 },
   locationStatus: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 10, borderRadius: 8, backgroundColor: 'rgba(0,122,255,0.1)' },
@@ -481,7 +495,7 @@ const styles = StyleSheet.create({
   pickerContainer: { flex: 1, marginHorizontal: 4 },
   pickerLabel: { marginBottom: 4, fontSize: 14, fontWeight: '500' },
   picker: { height: 40 },
-  clearFiltersButton: { backgroundColor: '#ff6b6b', padding: 10, borderRadius: 8, alignItems: 'center', marginTop: 10 },
+  clearFiltersButton: { backgroundColor: '#ff6b6b', padding: 10, borderRadius: 8, alignItems: 'center', marginTop: 10, flexDirection: 'row' },
   clearFiltersText: { color: 'white', fontWeight: 'bold' },
   section: { marginTop: 10 },
   sectionHeader: { marginBottom: 12 },

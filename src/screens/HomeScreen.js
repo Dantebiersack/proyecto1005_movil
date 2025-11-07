@@ -7,6 +7,11 @@ import BusinessCard from "../components/BusinessCard";
 import LocationStatus from "../components/LocationStatus";
 import * as Location from 'expo-location';
 
+
+//Estilos
+import { lightTheme, darkTheme } from "../styles/themes";
+import styles from "../styles/HomeScreenStyles";
+
 export default function HomeScreen({ navigation }) {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [search, setSearch] = useState("");
@@ -319,79 +324,3 @@ export default function HomeScreen({ navigation }) {
   );
 }
 
-const lightTheme = StyleSheet.create({
-  container: {
-    backgroundColor: "#f5f6fa",
-  },
-  text: {
-    color: "#222",
-  },
-  card: {
-    backgroundColor: "#fff",
-  },
-  input: {
-    backgroundColor: "#fff",
-    color: "#000",
-  },
-});
-
-const darkTheme = StyleSheet.create({
-  container: {
-    backgroundColor: "#1e272e",
-  },
-  text: {
-    color: "#f5f6fa",
-  },
-  card: {
-    backgroundColor: "#2f3640",
-  },
-  input: {
-    backgroundColor: "#3a3a3a",
-    color: "#fff",
-  },
-});
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  loadingText: {
-    marginTop: 10,
-    fontSize: 16,
-  },
-  resultsContainer: {
-    padding: 16,
-  },
-  resultsHeader: {
-    marginBottom: 16,
-  },
-  resultsTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
-    marginBottom: 4,
-  },
-  distanceInfo: {
-    fontSize: 14,
-    opacity: 0.7,
-  },
-  noResults: {
-    alignItems: "center",
-    padding: 20,
-  },
-  noResultsText: {
-    textAlign: "center",
-    fontSize: 16,
-    marginBottom: 8,
-    opacity: 0.8,
-  },
-  noResultsSubtext: {
-    textAlign: "center",
-    fontSize: 14,
-    opacity: 0.6,
-  },
-});

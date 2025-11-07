@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, Text, TouchableOpacity } from 'react-native';
 import MapboxGL from '@react-native-mapbox-gl/maps';
 import { useRoute, useNavigation } from '@react-navigation/native';
+import styles from "../styles/MapScreenStyles";
 
 MapboxGL.setAccessToken('pk.eyJ1IjoibGluay1taW5pc2gtMDMxMiIsImEiOiJjbWdpbmE4YWMwYjBrMmtvaW1ja2tmbzM5In0.5jHjask85M6t795e1D808g');
 
@@ -96,76 +97,3 @@ export default function MapScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#ddd',
-  },
-  backButton: {
-    marginRight: 12,
-  },
-  backButtonText: {
-    fontSize: 16,
-    color: '#3843c2',
-    fontWeight: '600',
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    flex: 1,
-  },
-  map: {
-    flex: 1,
-  },
-  userMarker: {
-    backgroundColor: '#3843c2',
-    borderRadius: 20,
-    padding: 8,
-  },
-  businessMarker: {
-    backgroundColor: '#39b58b',
-    borderRadius: 20,
-    padding: 8,
-  },
-  markerText: {
-    fontSize: 16,
-  },
-  infoCard: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: 'white',
-    padding: 16,
-    borderTopLeftRadius: 12,
-    borderTopRightRadius: 12,
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  businessName: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 4,
-  },
-  businessCategory: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 8,
-  },
-  businessAddress: {
-    fontSize: 14,
-    marginBottom: 4,
-  },
-  businessPhone: {
-    fontSize: 14,
-  },
-});

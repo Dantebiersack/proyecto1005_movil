@@ -2,6 +2,7 @@ import React from "react";
 import { View, Text, TextInput, TouchableOpacity, StyleSheet } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 import Ionicons from "react-native-vector-icons/Ionicons";
+import styles from "../styles/componentStyles/SearchFiltersStyles";
 
 export default function SearchFilters({
   search,
@@ -48,39 +49,3 @@ export default function SearchFilters({
   );
 }
 
-const styles = StyleSheet.create({
-  searchSection: {
-    marginVertical: 10,
-    paddingHorizontal: 16,
-  },
-  searchInput: {
-    backgroundColor: "#fff",
-    borderRadius: 10,
-    padding: 10,
-    marginBottom: 10,
-  },
-  filtersRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  label: {
-    fontWeight: "600",
-  },
-  picker: {
-    flex: 1,
-  },
-  clearFiltersButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#e63946",
-    borderRadius: 8,
-    paddingVertical: 8,
-    marginTop: 10,
-  },
-  clearFiltersText: {
-    color: "#fff",
-    fontWeight: "600",
-  },
-});

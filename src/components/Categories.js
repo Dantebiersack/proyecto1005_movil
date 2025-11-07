@@ -1,5 +1,6 @@
 import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import styles from "../styles/componentStyles/CategoriesStyles";
 
 export default function Categories({
   categorias,
@@ -42,29 +43,3 @@ export default function Categories({
   );
 }
 
-const styles = StyleSheet.create({
-  section: {
-    marginTop: 20,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: "700",
-    marginBottom: 10,
-  },
-  categoriesContainer: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
-  },
-  categoryBox: {
-    padding: 10,
-    borderRadius: 10,
-    marginBottom: 8,
-  },
-  selectedCategory: {
-    backgroundColor: "#3843c2",
-  },
-  selectedCategoryText: {
-    color: "#fff",
-  },
-});

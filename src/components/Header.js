@@ -1,6 +1,8 @@
 import React from "react";
 import { View, Text, TouchableOpacity, Image, StyleSheet } from "react-native";
 import Ionicons from "react-native-vector-icons/Ionicons";
+import styles from "../styles/componentStyles/HeaderStyles";
+
 
 export default function Header({ isDarkMode, setIsDarkMode, themeStyles }) {
   return (
@@ -26,25 +28,4 @@ export default function Header({ isDarkMode, setIsDarkMode, themeStyles }) {
   );
 }
 
-const styles = StyleSheet.create({
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-  },
-  logo: {
-    width: 45,
-    height: 45,
-    borderRadius: 10,
-  },
-  companyName: {
-    fontSize: 20,
-    fontWeight: "bold",
-  },
-  themeButton: {
-    padding: 8,
-    borderRadius: 50,
-  },
-});
+

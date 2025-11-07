@@ -209,17 +209,12 @@ export default function HomeScreen({ navigation }) {
 
   // Función para manejar agendar cita
   const handleAgendar = (empresa) => {
-    Alert.alert(
-      "Agendar cita",
-      `¿Deseas agendar una cita en ${empresa.Nombre}?\n\nTeléfono: ${empresa.TelefonoContacto}`,
-      [
-        { text: "Cancelar", style: "cancel" },
-        { text: "Llamar", onPress: () => {
-          Alert.alert("Llamar", `Llamando a ${empresa.TelefonoContacto}`);
-        }}
-      ]
-    );
-  };
+  navigation.navigate("DateScreen", { 
+    empresa: empresa,
+    isDarkMode: isDarkMode
+  });
+};
+
 
   if (loading) {
     return (

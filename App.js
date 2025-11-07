@@ -5,6 +5,7 @@ import LoginScreen from './src/screens/LoginScreen';
 import HomeScreen from './src/screens/HomeScreen';
 import MapboxMap from './MapboxMap';
 
+
 const Stack = createNativeStackNavigator();
 
 export default function App() {

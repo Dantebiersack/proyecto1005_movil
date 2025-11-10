@@ -15,8 +15,12 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import moment from 'moment';
 import 'moment/locale/es';
 import styles from "../styles/DateScreenStyles";
+import { lightTheme, darkTheme } from "../styles/themes";
+
 
 moment.locale('es');
+
+
 
 export default function DateScreen() {
   const route = useRoute();

@@ -7,8 +7,7 @@ import BusinessCard from "../components/BusinessCard";
 import LocationStatus from "../components/LocationStatus";
 import * as Location from 'expo-location';
 
-
-//Estilos
+// Estilos
 import { lightTheme, darkTheme } from "../styles/themes";
 import styles from "../styles/HomeScreenStyles";
 
@@ -97,8 +96,8 @@ export default function HomeScreen({ navigation }) {
       try {
         setLoading(true);
         const apiUrl = __DEV__ 
-          ? 'https://37b3ca65363e.ngrok-free.app/api/Negocios'
-          : 'https://37b3ca65363e.ngrok-free.app/api/Negocios';
+          ? 'https://243ab9b6b9b7.ngrok-free.app/api/Negocios'
+          : 'https://243ab9b6b9b7.ngrok-free.app/api/Negocios';
         
         const response = await fetch(apiUrl);
         
@@ -214,12 +213,11 @@ export default function HomeScreen({ navigation }) {
 
   // Función para manejar agendar cita
   const handleAgendar = (empresa) => {
-  navigation.navigate("DateScreen", { 
-    empresa: empresa,
-    isDarkMode: isDarkMode
-  });
-};
-
+    navigation.navigate("DateScreen", { 
+      empresa: empresa,
+      isDarkMode: isDarkMode
+    });
+  };
 
   if (loading) {
     return (
@@ -246,7 +244,7 @@ export default function HomeScreen({ navigation }) {
           onUpdateLocation={handleActualizarUbicacion}
         />
 
-        {/* FILTROS */}
+        {/* FILTROS - Incluye el filtro por radio */}
         <SearchFilters
           search={search}
           setSearch={setSearch}
@@ -311,7 +309,7 @@ export default function HomeScreen({ navigation }) {
                   ? 'No se encontraron negocios con los filtros aplicados'
                   : 'Esperando ubicación...'}
               </Text>
-              {(search || selectedCategoria !== "todas") && (
+              {(search || selectedCategoria !== "todas" || selectedKm !== "2") && (
                 <Text style={[styles.noResultsSubtext, themeStyles.text]}>
                   Intenta con otros filtros o limpia los filtros actuales
                 </Text>
@@ -323,4 +321,3 @@ export default function HomeScreen({ navigation }) {
     </View>
   );
 }
-

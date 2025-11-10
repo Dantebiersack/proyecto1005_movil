@@ -96,8 +96,8 @@ export default function HomeScreen({ navigation }) {
       try {
         setLoading(true);
         const apiUrl = __DEV__ 
-          ? 'https://243ab9b6b9b7.ngrok-free.app/api/Negocios'
-          : 'https://243ab9b6b9b7.ngrok-free.app/api/Negocios';
+          ? 'https://nearbizbackend2.onrender.com/api/Negocios'
+          : 'https://nearbizbackend2.onrender.com/apiNegocios';
         
         const response = await fetch(apiUrl);
         

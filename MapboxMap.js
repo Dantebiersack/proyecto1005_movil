@@ -1,42 +1,20 @@
 import * as React from 'react';
-import { StyleSheet, View, Text, TextInput, Button, FlatList, Alert } from 'react-native';
-import MapView, { Marker } from 'react-native-maps';
+import { StyleSheet, View, Text } from 'react-native';
+import MapView, { Marker, Polyline } from 'react-native-maps';
 import * as Location from 'expo-location';
-//Si
-export default function MapboxMap() {
-  const [region, setRegion] = React.useState({
-    latitude: 40.7128,
-    longitude: -74.0060,
-    latitudeDelta: 0.0922,
-    longitudeDelta: 0.0421,
-  });
-  const [userLocation, setUserLocation] = React.useState(null);
+
+export default function MapboxMap({ route }) {
+  const { empresa, userLocation } = route.params;
+  
+  const [region, setRegion] = React.useState(null);
+  const [currentUserLocation, setCurrentUserLocation] = React.useState(null);
   const [errorMsg, setErrorMsg] = React.useState(null);
+  const [distance, setDistance] = React.useState(null);
 
-  const [destinations, setDestinations] = React.useState([]); // Lista de destinos
-  const [destinationInput, setDestinationInput] = React.useState("");
-
-  // Obtener ubicación del usuario
-  React.useEffect(() => {
-    (async () => {
-      let { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        setErrorMsg('Permiso de ubicación denegado.');
-        return;
-      }
-      let location = await Location.getCurrentPositionAsync({});
-      const coords = {
-        latitude: location.coords.latitude,
-        longitude: location.coords.longitude,
-      };
-      setRegion(prev => ({ ...prev, ...coords, latitudeDelta: 0.04, longitudeDelta: 0.02 }));
-      setUserLocation(coords);
-    })();
-  }, []);
-
+  // Calcular distancia entre dos puntos
   const calculateDistance = (lat1, lon1, lat2, lon2) => {
     const toRad = x => (x * Math.PI) / 180;
-    const R = 6371; // km
+    const R = 6371; // Radio de la Tierra en km
     const dLat = toRad(lat2 - lat1);
     const dLon = toRad(lon2 - lon1);
     const a =
@@ -46,26 +24,97 @@ export default function MapboxMap() {
     return R * c;
   };
 
-  const addDestination = () => {
-    if (!destinationInput) return Alert.alert("Error", "Ingresa coordenadas lat,lng");
-    const parts = destinationInput.split(',');
-    if (parts.length !== 2) return Alert.alert("Error", "Formato incorrecto, usar lat,lng");
-    const lat = parseFloat(parts[0]);
-    const lng = parseFloat(parts[1]);
+  // Obtener ubicación actual del usuario
+  React.useEffect(() => {
+    (async () => {
+      try {
+        let { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== 'granted') {
+          setErrorMsg('Permiso de ubicación denegado.');
+          // Usar la ubicación que viene del HomeScreen como fallback
+          if (userLocation) {
+            setCurrentUserLocation(userLocation);
+            calculateMapRegion(userLocation, empresa);
+          }
+          return;
+        }
 
-    if (!userLocation) return Alert.alert("Error", "Ubicación del usuario no disponible");
+        let location = await Location.getCurrentPositionAsync({});
+        const coords = {
+          latitude: location.coords.latitude,
+          longitude: location.coords.longitude,
+        };
+        
+        setCurrentUserLocation(coords);
+        calculateMapRegion(coords, empresa);
+        
+      } catch (error) {
+        console.error('Error getting location:', error);
+        // Usar la ubicación del HomeScreen si hay error
+        if (userLocation) {
+          setCurrentUserLocation(userLocation);
+          calculateMapRegion(userLocation, empresa);
+        }
+      }
+    })();
+  }, []);
 
-    const distance = calculateDistance(userLocation.latitude, userLocation.longitude, lat, lng);
+  // Calcular región del mapa para mostrar ambos puntos
+  const calculateMapRegion = (userCoords, business) => {
+    if (!userCoords || !business) return;
 
-    const newDestination = { latitude: lat, longitude: lng, distance };
-    const updatedDestinations = [...destinations, newDestination].sort((a, b) => a.distance - b.distance);
+    // Calcular distancia
+    const dist = calculateDistance(
+      userCoords.latitude,
+      userCoords.longitude,
+      business.CoordenadasLat,
+      business.CoordenadasLng
+    );
+    setDistance(dist.toFixed(2));
 
-    setDestinations(updatedDestinations);
-    setDestinationInput("");
+    // Calcular región que incluya ambos puntos
+    const midLat = (userCoords.latitude + business.CoordenadasLat) / 2;
+    const midLng = (userCoords.longitude + business.CoordenadasLng) / 2;
+    
+    // Calcular deltas para asegurar que ambos puntos sean visibles
+    const latDelta = Math.abs(userCoords.latitude - business.CoordenadasLat) * 1.5 + 0.01;
+    const lngDelta = Math.abs(userCoords.longitude - business.CoordenadasLng) * 1.5 + 0.01;
+
+    setRegion({
+      latitude: midLat,
+      longitude: midLng,
+      latitudeDelta: Math.max(latDelta, 0.05),
+      longitudeDelta: Math.max(lngDelta, 0.05),
+    });
   };
 
-  if (errorMsg) {
-    return <View style={styles.center}><Text>{errorMsg}</Text></View>;
+  // Coordenadas para la línea entre usuario y restaurante
+  const routeCoordinates = currentUserLocation && empresa ? [
+    {
+      latitude: currentUserLocation.latitude,
+      longitude: currentUserLocation.longitude,
+    },
+    {
+      latitude: empresa.CoordenadasLat,
+      longitude: empresa.CoordenadasLng,
+    }
+  ] : [];
+
+  if (errorMsg && !userLocation) {
+    return (
+      <View style={styles.center}>
+        <Text>{errorMsg}</Text>
+      </View>
+    );
+  }
+
+  // Mostrar loading mientras se obtiene la ubicación
+  if (!region && !errorMsg) {
+    return (
+      <View style={styles.center}>
+        <Text>Obteniendo tu ubicación...</Text>
+      </View>
+    );
   }
 
   return (
@@ -75,76 +124,103 @@ export default function MapboxMap() {
         initialRegion={region}
         region={region}
         showsUserLocation={true}
-        followsUserLocation={true}
         onRegionChangeComplete={setRegion}
       >
-        <Marker
-          coordinate={region}
-          title="Mi Ubicación"
-          description="Aquí estoy"
-        />
-        {destinations.map((dest, index) => (
+        {/* Marcador del usuario */}
+        {currentUserLocation && (
           <Marker
-            key={index}
-            coordinate={{ latitude: dest.latitude, longitude: dest.longitude }}
-            title={`Destino ${index + 1}`}
-            description={`${dest.distance.toFixed(2)} km de ti`}
-            pinColor="green"
+            coordinate={currentUserLocation}
+            title="Mi Ubicación"
+            description="Estás aquí"
+            pinColor="blue"
           />
-        ))}
+        )}
+
+        {/* Marcador del restaurante/negocio */}
+        {empresa && (
+          <Marker
+            coordinate={{
+              latitude: empresa.CoordenadasLat,
+              longitude: empresa.CoordenadasLng,
+            }}
+            title={empresa.Nombre}
+            description={`${empresa.Direccion} - ${distance} km`}
+            pinColor="red"
+          />
+        )}
+
+        {/* Línea de ruta entre usuario y restaurante */}
+        {routeCoordinates.length > 0 && (
+          <Polyline
+            coordinates={routeCoordinates}
+            strokeColor="#007AFF"
+            strokeWidth={3}
+            lineDashPattern={[5, 5]}
+          />
+        )}
       </MapView>
 
-      <View style={styles.inputContainer}>
-        <TextInput
-          style={styles.input}
-          placeholder="Latitud,Longitud"
-          value={destinationInput}
-          onChangeText={setDestinationInput}
-        />
-        <Button title="Agregar Destino" onPress={addDestination} />
-      </View>
-
-      <View style={styles.listContainer}>
-        <Text style={{ fontWeight: 'bold', marginBottom: 5 }}>Destinos más cercanos:</Text>
-        <FlatList
-          data={destinations}
-          keyExtractor={(item, index) => index.toString()}
-          renderItem={({ item, index }) => (
-            <Text>{index + 1}. ({item.latitude.toFixed(4)}, {item.longitude.toFixed(4)}) - {item.distance.toFixed(2)} km</Text>
+      {/* Panel de información */}
+      {empresa && currentUserLocation && (
+        <View style={styles.infoPanel}>
+          <Text style={styles.businessName}>{empresa.Nombre}</Text>
+          <Text style={styles.distanceText}>Distancia: {distance} km</Text>
+          <Text style={styles.addressText}>{empresa.Direccion}</Text>
+          {empresa.TelefonoContacto && (
+            <Text style={styles.phoneText}>📞 {empresa.TelefonoContacto}</Text>
           )}
-        />
-      </View>
+        </View>
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  map: { flex: 1 },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  inputContainer: {
-    position: 'absolute',
-    bottom: 100,
-    left: 10,
-    right: 10,
-    backgroundColor: 'white',
-    borderRadius: 8,
-    padding: 10,
-    flexDirection: 'row',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOpacity: 0.2,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 4,
+  map: { 
+    flex: 1 
   },
-  input: { flex: 1, borderWidth: 1, borderColor: '#ccc', marginRight: 10, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 4 },
-  listContainer: {
+  center: { 
+    flex: 1, 
+    justifyContent: 'center', 
+    alignItems: 'center' 
+  },
+  infoPanel: {
     position: 'absolute',
-    bottom: 10,
+    top: 20,
     left: 10,
     right: 10,
     backgroundColor: 'white',
-    borderRadius: 8,
-    padding: 10,
-    maxHeight: 90,
+    borderRadius: 12,
+    padding: 15,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  businessName: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 5,
+    color: '#333',
+  },
+  distanceText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#007AFF',
+    marginBottom: 5,
+  },
+  addressText: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 3,
+  },
+  phoneText: {
+    fontSize: 14,
+    color: '#333',
+    fontWeight: '500',
   },
 });

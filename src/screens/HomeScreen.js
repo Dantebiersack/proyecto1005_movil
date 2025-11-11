@@ -97,7 +97,7 @@ export default function HomeScreen({ navigation }) {
         setLoading(true);
         const apiUrl = __DEV__ 
           ? 'https://nearbizbackend2.onrender.com/api/Negocios'
-          : 'https://nearbizbackend2.onrender.com/apiNegocios';
+          : 'https://nearbizbackend2.onrender.com/api/Negocios';
         
         const response = await fetch(apiUrl);
         

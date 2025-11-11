@@ -1,37 +1,56 @@
 import * as React from 'react';
-import { StyleSheet, View, Text } from 'react-native';
+import { StyleSheet, View, Text, TouchableOpacity } from 'react-native';
 import MapView, { Marker, Polyline } from 'react-native-maps';
 import * as Location from 'expo-location';
 
 export default function MapboxMap({ route }) {
   const { empresa, userLocation } = route.params;
-  
+
   const [region, setRegion] = React.useState(null);
   const [currentUserLocation, setCurrentUserLocation] = React.useState(null);
   const [errorMsg, setErrorMsg] = React.useState(null);
   const [distance, setDistance] = React.useState(null);
+  const [duration, setDuration] = React.useState(null);
+  const [routeCoords, setRouteCoords] = React.useState([]);
+  const [travelMode, setTravelMode] = React.useState('driving');
 
-  // Calcular distancia entre dos puntos
-  const calculateDistance = (lat1, lon1, lat2, lon2) => {
-    const toRad = x => (x * Math.PI) / 180;
-    const R = 6371; // Radio de la Tierra en km
-    const dLat = toRad(lat2 - lat1);
-    const dLon = toRad(lon2 - lon1);
-    const a =
-      Math.sin(dLat / 2) ** 2 +
-      Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return R * c;
+  const MAPBOX_TOKEN =
+    'pk.eyJ1IjoibGluay1taW5pc2gtMDMxMiIsImEiOiJjbWdpbmE4YWMwYjBrMmtvaW1ja2tmbzM5In0.5jHjask85M6t795e1D808g';
+
+  // Obtener ruta desde Mapbox Directions API
+  const fetchRouteFromMapbox = async (start, end, mode = 'driving') => {
+    try {
+      const url = `https://api.mapbox.com/directions/v5/mapbox/${mode}/${start.longitude},${start.latitude};${end.longitude},${end.latitude}?geometries=geojson&overview=full&access_token=${MAPBOX_TOKEN}`;
+
+      const response = await fetch(url);
+      const data = await response.json();
+
+      if (data.routes && data.routes.length > 0) {
+        const route = data.routes[0];
+        const coords = route.geometry.coordinates.map(([lng, lat]) => ({
+          latitude: lat,
+          longitude: lng,
+        }));
+
+        setRouteCoords(coords);
+        setDistance((route.distance / 1000).toFixed(2)); // km
+        setDuration((route.duration / 60).toFixed(1)); // min
+      } else {
+        console.warn('No se encontró ruta');
+        setRouteCoords([]);
+      }
+    } catch (error) {
+      console.error('Error fetching route:', error);
+    }
   };
 
-  // Obtener ubicación actual del usuario
+  //  Obtener ubicación actual del usuario
   React.useEffect(() => {
     (async () => {
       try {
         let { status } = await Location.requestForegroundPermissionsAsync();
         if (status !== 'granted') {
           setErrorMsg('Permiso de ubicación denegado.');
-          // Usar la ubicación que viene del HomeScreen como fallback
           if (userLocation) {
             setCurrentUserLocation(userLocation);
             calculateMapRegion(userLocation, empresa);
@@ -44,41 +63,51 @@ export default function MapboxMap({ route }) {
           latitude: location.coords.latitude,
           longitude: location.coords.longitude,
         };
-        
+
         setCurrentUserLocation(coords);
         calculateMapRegion(coords, empresa);
-        
+
+        if (empresa) {
+          fetchRouteFromMapbox(
+            coords,
+            {
+              latitude: empresa.CoordenadasLat,
+              longitude: empresa.CoordenadasLng,
+            },
+            travelMode
+          );
+        }
       } catch (error) {
         console.error('Error getting location:', error);
-        // Usar la ubicación del HomeScreen si hay error
-        if (userLocation) {
-          setCurrentUserLocation(userLocation);
-          calculateMapRegion(userLocation, empresa);
-        }
       }
     })();
   }, []);
 
-  // Calcular región del mapa para mostrar ambos puntos
+  // Recalcular ruta al cambiar modo de transporte
+  React.useEffect(() => {
+    if (currentUserLocation && empresa) {
+      fetchRouteFromMapbox(
+        currentUserLocation,
+        {
+          latitude: empresa.CoordenadasLat,
+          longitude: empresa.CoordenadasLng,
+        },
+        travelMode
+      );
+    }
+  }, [travelMode]);
+
+  // Calcular la región visible del mapa
   const calculateMapRegion = (userCoords, business) => {
     if (!userCoords || !business) return;
 
-    // Calcular distancia
-    const dist = calculateDistance(
-      userCoords.latitude,
-      userCoords.longitude,
-      business.CoordenadasLat,
-      business.CoordenadasLng
-    );
-    setDistance(dist.toFixed(2));
-
-    // Calcular región que incluya ambos puntos
     const midLat = (userCoords.latitude + business.CoordenadasLat) / 2;
     const midLng = (userCoords.longitude + business.CoordenadasLng) / 2;
-    
-    // Calcular deltas para asegurar que ambos puntos sean visibles
-    const latDelta = Math.abs(userCoords.latitude - business.CoordenadasLat) * 1.5 + 0.01;
-    const lngDelta = Math.abs(userCoords.longitude - business.CoordenadasLng) * 1.5 + 0.01;
+
+    const latDelta =
+      Math.abs(userCoords.latitude - business.CoordenadasLat) * 1.5 + 0.01;
+    const lngDelta =
+      Math.abs(userCoords.longitude - business.CoordenadasLng) * 1.5 + 0.01;
 
     setRegion({
       latitude: midLat,
@@ -88,18 +117,6 @@ export default function MapboxMap({ route }) {
     });
   };
 
-  // Coordenadas para la línea entre usuario y restaurante
-  const routeCoordinates = currentUserLocation && empresa ? [
-    {
-      latitude: currentUserLocation.latitude,
-      longitude: currentUserLocation.longitude,
-    },
-    {
-      latitude: empresa.CoordenadasLat,
-      longitude: empresa.CoordenadasLng,
-    }
-  ] : [];
-
   if (errorMsg && !userLocation) {
     return (
       <View style={styles.center}>
@@ -108,7 +125,6 @@ export default function MapboxMap({ route }) {
     );
   }
 
-  // Mostrar loading mientras se obtiene la ubicación
   if (!region && !errorMsg) {
     return (
       <View style={styles.center}>
@@ -126,17 +142,14 @@ export default function MapboxMap({ route }) {
         showsUserLocation={true}
         onRegionChangeComplete={setRegion}
       >
-        {/* Marcador del usuario */}
+        {/* Marcadores */}
         {currentUserLocation && (
           <Marker
             coordinate={currentUserLocation}
-            title="Mi Ubicación"
-            description="Estás aquí"
+            title="Mi ubicación"
             pinColor="blue"
           />
         )}
-
-        {/* Marcador del restaurante/negocio */}
         {empresa && (
           <Marker
             coordinate={{
@@ -144,83 +157,122 @@ export default function MapboxMap({ route }) {
               longitude: empresa.CoordenadasLng,
             }}
             title={empresa.Nombre}
-            description={`${empresa.Direccion} - ${distance} km`}
+            description={empresa.Direccion}
             pinColor="red"
           />
         )}
 
-        {/* Línea de ruta entre usuario y restaurante */}
-        {routeCoordinates.length > 0 && (
+        {/* Ruta */}
+        {routeCoords.length > 0 && (
           <Polyline
-            coordinates={routeCoordinates}
+            coordinates={routeCoords}
             strokeColor="#007AFF"
-            strokeWidth={3}
-            lineDashPattern={[5, 5]}
+            strokeWidth={4}
           />
         )}
       </MapView>
 
-      {/* Panel de información */}
-      {empresa && currentUserLocation && (
-        <View style={styles.infoPanel}>
-          <Text style={styles.businessName}>{empresa.Nombre}</Text>
-          <Text style={styles.distanceText}>Distancia: {distance} km</Text>
-          <Text style={styles.addressText}>{empresa.Direccion}</Text>
-          {empresa.TelefonoContacto && (
-            <Text style={styles.phoneText}>📞 {empresa.TelefonoContacto}</Text>
-          )}
+      {/* 🔹 Panel de información abajo */}
+      <View style={styles.bottomInfoCard}>
+        <Text style={styles.businessName}>{empresa.Nombre}</Text>
+        <Text style={styles.businessAddress}>{empresa.Direccion}</Text>
+        <Text style={styles.businessPhone}>📞 {empresa.TelefonoContacto}</Text>
+
+        <Text style={styles.distanceText}>
+          {distance && duration
+            ? `Distancia: ${distance} km | Tiempo: ${duration} min`
+            : 'Calculando ruta...'}
+        </Text>
+
+        {/* Selector de modo de transporte */}
+        <View style={styles.modeSelector}>
+          <TouchableOpacity
+            style={[
+              styles.modeButton,
+              travelMode === 'driving' && styles.modeSelected,
+            ]}
+            onPress={() => setTravelMode('driving')}
+          >
+            <Text style={styles.modeIcon}>🚗</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[
+              styles.modeButton,
+              travelMode === 'walking' && styles.modeSelected,
+            ]}
+            onPress={() => setTravelMode('walking')}
+          >
+            <Text style={styles.modeIcon}>🚶‍♂️</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[
+              styles.modeButton,
+              travelMode === 'cycling' && styles.modeSelected,
+            ]}
+            onPress={() => setTravelMode('cycling')}
+          >
+            <Text style={styles.modeIcon}>🚴‍♂️</Text>
+          </TouchableOpacity>
         </View>
-      )}
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  map: { 
-    flex: 1 
-  },
-  center: { 
-    flex: 1, 
-    justifyContent: 'center', 
-    alignItems: 'center' 
-  },
-  infoPanel: {
+  map: { flex: 1 },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+
+  bottomInfoCard: {
     position: 'absolute',
-    top: 20,
+    bottom: 20,
     left: 10,
     right: 10,
     backgroundColor: 'white',
     borderRadius: 12,
     padding: 15,
     shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
     shadowOpacity: 0.25,
-    shadowRadius: 3.84,
+    shadowRadius: 3.5,
     elevation: 5,
   },
+
   businessName: {
     fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 5,
+    fontWeight: '700',
     color: '#333',
   },
-  distanceText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#007AFF',
-    marginBottom: 5,
-  },
-  addressText: {
+  businessAddress: {
     fontSize: 14,
-    color: '#666',
+    color: '#555',
     marginBottom: 3,
   },
-  phoneText: {
+  businessPhone: {
     fontSize: 14,
-    color: '#333',
-    fontWeight: '500',
+    color: '#007AFF',
+    marginBottom: 8,
+  },
+  distanceText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#007AFF',
+    marginBottom: 8,
+  },
+
+  modeSelector: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 10,
+  },
+  modeButton: {
+    backgroundColor: '#eee',
+    padding: 10,
+    borderRadius: 50,
+  },
+  modeSelected: {
+    backgroundColor: '#007AFF',
+  },
+  modeIcon: {
+    fontSize: 20,
   },
 });

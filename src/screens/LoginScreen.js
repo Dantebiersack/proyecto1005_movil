@@ -1,4 +1,3 @@
-// src/screens/LoginScreen.js
 import React, { useState } from "react";
 import {
   View,
@@ -11,6 +10,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  Alert,
 } from "react-native";
 
 export default function LoginScreen({ navigation }) {
@@ -18,13 +18,52 @@ export default function LoginScreen({ navigation }) {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Acción no funcional — solo cambia de pantalla
-  const handleLogin = () => {
+  // 🔐 Función para iniciar sesión con el backend real
+  const handleLogin = async () => {
+    if (!username || !password) {
+      Alert.alert("Campos requeridos", "Por favor ingresa tu correo y contraseña");
+      return;
+    }
+
     setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
+
+    try {
+      // ⚠️ CAMBIA la IP/puerto por la de tu backend si usas otra
+      const response = await fetch("https://nearbizbackend2.onrender.com/api/Auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userOrEmail: username,
+          password: password,
+        }),
+      });
+
+      // 🚫 Si la API devuelve 401 u otro error
+      if (!response.ok) {
+        const message = await response.text();
+        throw new Error(message || "Usuario o contraseña incorrectos");
+      }
+
+      // ✅ Si el login fue exitoso
+      const data = await response.json();
+      console.log("Inicio de sesión correcto:", data);
+
+      Alert.alert("Bienvenido", `Hola ${data.nombre}`);
       navigation.navigate("Home");
-    }, 300);
+
+    } catch (error) {
+      console.error("Error al iniciar sesión:", error);
+      Alert.alert("Error", error.message || "Usuario o contraseña incorrectos");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+ // Nueva función para registrarse
+  const handleRegister = () => {
+    navigation.navigate("RegisterScreen"); // asegúrate de tener una pantalla llamada "RegisterScreen"
   };
 
   return (
@@ -32,7 +71,6 @@ export default function LoginScreen({ navigation }) {
       style={{ flex: 1 }}
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
-      {/* Fondo general */}
       <ImageBackground
         source={require("../../assets/fondoLogin.png")}
         style={styles.background}
@@ -42,7 +80,7 @@ export default function LoginScreen({ navigation }) {
           contentContainerStyle={styles.container}
           showsVerticalScrollIndicator={false}
         >
-          {/* LOGO + TÍTULO */}
+          {/* LOGO */}
           <View style={styles.leftSection}>
             <Image
               source={require("../../assets/LogoNearBiz.jpeg")}
@@ -60,6 +98,7 @@ export default function LoginScreen({ navigation }) {
                 placeholderTextColor="#ccc"
                 value={username}
                 onChangeText={setUsername}
+                autoCapitalize="none"
               />
 
               <Text style={styles.label}>CONTRASEÑA</Text>
@@ -79,6 +118,13 @@ export default function LoginScreen({ navigation }) {
               >
                 <Text style={styles.loginButtonText}>
                   {loading ? "Ingresando..." : "INGRESAR"}
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity onPress={handleRegister} style={styles.registerButton}>
+                <Text style={styles.registerText}>
+                  ¿No tienes cuenta?{" "}
+                  <Text style={styles.registerLink}>Regístrate</Text>
                 </Text>
               </TouchableOpacity>
             </View>
@@ -112,12 +158,6 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     marginBottom: 10,
     resizeMode: "contain",
-  },
-  subtitle: {
-    fontSize: 16,
-    color: "#39b58b",
-    marginTop: 4,
-    fontWeight: "500",
   },
   rightSection: {
     width: "100%",
@@ -161,5 +201,16 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontWeight: "700",
     fontSize: 16,
+  },
+  registerButton: {
+    marginTop: 20,
+  },
+  registerText: {
+    color: "#ccc",
+    fontSize: 14,
+  },
+  registerLink: {
+    color: "#39b58b",
+    fontWeight: "600",
   },
 });

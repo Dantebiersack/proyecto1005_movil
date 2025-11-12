@@ -5,6 +5,8 @@ import LoginScreen from './src/screens/LoginScreen';
 import HomeScreen from './src/screens/HomeScreen';
 import MapboxMap from './MapboxMap';
 import DateScreen from './src/screens/DateScreen';
+import RegisterScreen from "./src/screens/RegisterScreen";
+
 
 const Stack = createNativeStackNavigator();
 
@@ -16,6 +18,8 @@ export default function App() {
         <Stack.Screen name="Home" component={HomeScreen} />
         <Stack.Screen name="Mapa" component={MapboxMap} />
         <Stack.Screen name="DateScreen" component={DateScreen} />
+        <Stack.Screen name="RegisterScreen" component={RegisterScreen} />
+
       </Stack.Navigator>
     </NavigationContainer>
   );

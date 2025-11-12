@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "MiPrimerAppRN",
-    "slug": "MiPrimerAppRN",
+    "slug": "nearbiz",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -13,17 +13,28 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.josue0312sorganization.nearbiz",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.josue0312sorganization.nearbiz"
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "33c9d412-4e9f-46fd-913d-dbf641c451a3"
+      }
+    },
+    "owner": "josue0312s-organization"
   }
 }

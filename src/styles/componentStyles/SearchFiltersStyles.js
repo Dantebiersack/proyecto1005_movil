@@ -2,57 +2,56 @@ import { StyleSheet } from 'react-native';
 
 export default StyleSheet.create({
   searchSection: {
-    marginVertical: 10,
+    marginTop: 10,
     paddingHorizontal: 16,
   },
-  searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  searchIcon: {
-    position: 'absolute',
-    left: 12,
-    zIndex: 1,
-  },
+
   searchInput: {
-    flex: 1,
+    borderWidth: 1,
+    borderColor: "#d1d5db",
+    backgroundColor: "#fff",
     borderRadius: 12,
     padding: 12,
-    paddingLeft: 40,
     fontSize: 16,
+    marginBottom: 12,
   },
+
   filtersRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 10
   },
-  label: {
-    fontWeight: '600',
-    fontSize: 16,
-    flex: 0.3,
-  },
+
   pickerContainer: {
-    flex: 0.7,
-    borderRadius: 8,
-    overflow: 'hidden',
+    flex: 1,
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#d1d5db",
+    overflow: "hidden",
   },
+
+  pickerLabel: {
+    marginBottom: 4,
+    fontWeight: "600",
+  },
+
   picker: {
-    height: 50,
+    height: 45,
   },
+
   clearFiltersButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
     backgroundColor: '#e63946',
+    paddingVertical: 12,
     borderRadius: 10,
-    paddingVertical: 10,
+    alignItems: 'center',
     marginTop: 12,
-    gap: 6,
   },
+
   clearFiltersText: {
-    color: '#fff',
-    fontWeight: '600',
+    color: "#fff",
+    fontWeight: "700",
     fontSize: 14,
   },
 });

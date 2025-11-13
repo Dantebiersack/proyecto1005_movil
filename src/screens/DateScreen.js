@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
-  StyleSheet,
   ScrollView,
   TouchableOpacity,
   Alert,
@@ -14,20 +13,17 @@ import { useRoute, useNavigation } from '@react-navigation/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import moment from 'moment';
 import 'moment/locale/es';
+import axios from 'axios';
 import styles from "../styles/DateScreenStyles";
 import { lightTheme, darkTheme } from "../styles/themes";
 
-
 moment.locale('es');
-
-
 
 export default function DateScreen() {
   const route = useRoute();
   const navigation = useNavigation();
-  const { empresa, isDarkMode } = route.params; // Recibir isDarkMode
+  const { empresa, isDarkMode } = route.params;
 
-  // Estados
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedTime, setSelectedTime] = useState('');
   const [selectedTecnico, setSelectedTecnico] = useState('');
@@ -35,19 +31,16 @@ export default function DateScreen() {
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [notas, setNotas] = useState('');
   const [currentMonth, setCurrentMonth] = useState(moment());
+  const [horariosOcupados, setHorariosOcupados] = useState([]);
 
-  // Definir estilos del tema
   const themeStyles = isDarkMode ? darkTheme : lightTheme;
 
-  // Simulación de técnicos (Aqui vamos a jalar los técnicos reales)
   const tecnicos = [
-    { id: 1, nombre: 'Cualquier técnico' },
-    { id: 2, nombre: 'Juan Pérez' },
-    { id: 3, nombre: 'María García' },
-    { id: 4, nombre: 'Carlos López' },
+    { id: 1, nombre: 'Juan Pérez' },
+    { id: 2, nombre: 'María García' },
+    { id: 3, nombre: 'Carlos López' },
   ];
 
-  // Horarios disponibles (Aqui vamos a jalar los horarios reales)
   const horariosDisponibles = [
     '8:00 am', '8:15 am', '8:30 am', '8:45 am',
     '9:00 am', '9:15 am', '9:30 am', '9:45 am',
@@ -61,14 +54,128 @@ export default function DateScreen() {
     '5:00 pm', '5:15 pm', '5:30 pm', '5:45 pm',
   ];
 
+  // ============================
+  // 🔹 Consultar horarios ocupados desde backend
+  // ============================
+  const cargarHorariosOcupados = async (fecha, tecnicoId) => {
+    try {
+      const res = await axios.get('https://nearbizbackend3.vercel.app/api/citas');
+      const citas = res.data.filter(
+        c =>
+          c.fechaCita === fecha &&
+          c.idTecnico === tecnicoId &&
+          c.estado !== 'cancelada'
+      );
 
-  // Generar días del mes para el calendario
+      const ocupados = citas.map(c => {
+        const start = moment(c.horaInicio, 'HH:mm:ss').format('h:mm a');
+        return `${fecha} ${start}`;
+      });
+
+      setHorariosOcupados(ocupados);
+      console.log('🔹 Horarios ocupados:', ocupados);
+    } catch (err) {
+      console.error('❌ Error al obtener citas:', err.message);
+    }
+  };
+
+  // Si cambia la fecha o técnico, recarga disponibilidad
+  useEffect(() => {
+    if (selectedDate && selectedTecnico) {
+      const tecnicoId = tecnicos.find(t => t.nombre === selectedTecnico)?.id || 1;
+      cargarHorariosOcupados(selectedDate.format('YYYY-MM-DD'), tecnicoId);
+    }
+  }, [selectedDate, selectedTecnico]);
+
+  // ============================
+  // 🔹 Validar horarios disponibles
+  // ============================
+  const isTimeAvailable = (time) => {
+    if (!selectedDate || !selectedTecnico) return false;
+    const fechaHora = `${selectedDate.format('YYYY-MM-DD')} ${time}`;
+    if (horariosOcupados.includes(fechaHora)) return false;
+
+    const now = moment();
+    const selectedDateTime = moment(`${selectedDate.format('YYYY-MM-DD')} ${time}`, 'YYYY-MM-DD h:mm a');
+    return selectedDateTime.isAfter(now);
+  };
+
+  // ============================
+  // 🔹 Crear cita en backend
+  // ============================
+const confirmarCita = async () => {
+  if (!selectedTecnico) {
+    Alert.alert('Error', 'Por favor selecciona un técnico');
+    return;
+  }
+  if (!selectedDate) {
+    Alert.alert('Error', 'Por favor selecciona una fecha');
+    return;
+  }
+  if (!selectedTime) {
+    Alert.alert('Error', 'Por favor selecciona un horario');
+    return;
+  }
+
+  try {
+    // 🗓️ Fecha correcta
+    const fechaCita = selectedDate.format('YYYY-MM-DD');
+
+    // 🔧 Asegurar formato de hora correcto (24h)
+    const horaInicioMoment = moment(selectedTime, ['h:mm A', 'HH:mm']);
+    const horaInicio = horaInicioMoment.format('HH:mm:ss');
+
+    // ⏰ Sumar 15 minutos (asegurando que horaFin > horaInicio)
+    const horaFinMoment = horaInicioMoment.clone().add(15, 'minutes');
+    const horaFin = horaFinMoment.format('HH:mm:ss');
+
+    // 🧍 IDs (usa los reales si ya los tienes)
+    const id_cliente = 1;
+    const id_tecnico = tecnicos.find(t => t.nombre === selectedTecnico)?.id || 1;
+    const id_servicio = 1;
+
+    const nuevaCita = {
+      id_cliente,
+      id_tecnico,
+      id_servicio,
+      fecha_cita: fechaCita,
+      hora_inicio: horaInicio,
+      hora_fin: horaFin,
+      estado: 'pendiente',
+      motivo_cancelacion: null
+    };
+
+    console.log('📤 Enviando cita:', nuevaCita);
+
+    const response = await axios.post(
+      'https://nearbizbackend2.onrender.com/api/citas',
+      nuevaCita
+    );
+
+    console.log('✅ Cita creada:', response.data);
+
+    Alert.alert(
+      '¡Cita Agendada!',
+      `Tu cita ha sido agendada para el ${selectedDate.format('DD/MM/YYYY')} a las ${selectedTime} con ${selectedTecnico}`,
+      [{ text: 'OK', onPress: () => navigation.goBack() }]
+    );
+  } catch (error) {
+    console.error('❌ Error al agendar cita:', error.response?.data || error.message);
+    Alert.alert(
+      'Error',
+      error.response?.data?.message || 'Ocurrió un error al agendar la cita.'
+    );
+  }
+};
+
+  // ============================
+  // 🔹 Generar calendario
+  // ============================
   const generateCalendarDays = () => {
     const startOfMonth = currentMonth.clone().startOf('month');
     const endOfMonth = currentMonth.clone().endOf('month');
     const startDate = startOfMonth.clone().startOf('week');
     const endDate = endOfMonth.clone().endOf('week');
-
     const days = [];
     let currentDay = startDate.clone();
 
@@ -76,79 +183,18 @@ export default function DateScreen() {
       days.push(currentDay.clone());
       currentDay.add(1, 'day');
     }
-
     return days;
   };
 
   const days = generateCalendarDays();
 
-  // Verificar si una fecha está disponible 
-  const isDateAvailable = (date) => {
-    return date.isSameOrAfter(moment(), 'day');
-  };
+  const isDateAvailable = (date) => date.isSameOrAfter(moment(), 'day');
+  const goToPreviousMonth = () => setCurrentMonth(currentMonth.clone().subtract(1, 'month'));
+  const goToNextMonth = () => setCurrentMonth(currentMonth.clone().add(1, 'month'));
 
-  // Verificar si un horario está disponible
-  const isTimeAvailable = (time) => {
-    if (!selectedDate) return false;
-    
-    const fechaHora = `${selectedDate.format('YYYY-MM-DD')} ${time}`;
-    
-    // Verificar si ya está ocupado
-    if (horariosOcupados.includes(fechaHora)) {
-      return false;
-    }
-
-    // Verificar si es un horario futuro
-    const now = moment();
-    const selectedDateTime = moment(`${selectedDate.format('YYYY-MM-DD')} ${time}`, 'YYYY-MM-DD h:mm a');
-    
-    return selectedDateTime.isAfter(now);
-  };
-
-  // Navegación del calendario
-  const goToPreviousMonth = () => {
-    setCurrentMonth(currentMonth.clone().subtract(1, 'month'));
-  };
-
-  const goToNextMonth = () => {
-    setCurrentMonth(currentMonth.clone().add(1, 'month'));
-  };
-
-  // Confirmar cita
-  const confirmarCita = () => {
-    if (!selectedTecnico) {
-      Alert.alert('Error', 'Por favor selecciona un técnico');
-      return;
-    }
-
-    if (!selectedDate) {
-      Alert.alert('Error', 'Por favor selecciona una fecha');
-      return;
-    }
-
-    if (!selectedTime) {
-      Alert.alert('Error', 'Por favor selecciona un horario');
-      return;
-    }
-
-    // En un caso real, aquí enviarías los datos al backend
-    const fechaHora = `${selectedDate.format('YYYY-MM-DD')} ${selectedTime}`;
-    
-    // Simular guardado en el backend
-    setHorariosOcupados([...horariosOcupados, fechaHora]);
-
-    Alert.alert(
-      '¡Cita Agendada!',
-      `Tu cita ha sido agendada para el ${selectedDate.format('DD/MM/YYYY')} a las ${selectedTime} con ${selectedTecnico}`,
-      [
-        {
-          text: 'OK',
-          onPress: () => navigation.goBack(),
-        },
-      ]
-    );
-  };
-
+  // ============================
+  // 🔹 Render
+  // ============================
   return (
     <ScrollView style={[styles.container, themeStyles.container]} contentContainerStyle={styles.contentContainer}>
       {/* Header */}
@@ -160,13 +206,13 @@ export default function DateScreen() {
         <View style={styles.placeholder} />
       </View>
 
-      {/* Información de la empresa */}
+      {/* Empresa info */}
       <View style={[styles.empresaInfo, themeStyles.card]}>
         <Text style={[styles.empresaNombre, themeStyles.text]}>{empresa.Nombre}</Text>
         <Text style={[styles.empresaDireccion, themeStyles.text]}>{empresa.Direccion}</Text>
       </View>
 
-      {/* Selector de Técnico */}
+      {/* Técnicos */}
       <View style={[styles.section, themeStyles.card]}>
         <Text style={[styles.sectionTitle, themeStyles.text]}>Técnico que te atenderá</Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tecnicosContainer}>
@@ -193,16 +239,7 @@ export default function DateScreen() {
         </ScrollView>
       </View>
 
-      {/* Información del Servicio */}
-      <View style={[styles.section, themeStyles.card]}>
-        <Text style={[styles.sectionTitle, themeStyles.text]}>Servicios a realizar</Text>
-        <View style={[styles.servicioInfo, { backgroundColor: isDarkMode ? '#2a2a2a' : '#f8f9fa' }]}>
-          <Text style={[styles.servicioTexto, themeStyles.text]}>Actividades de ventas y promoción de negocios</Text>
-          <Text style={[styles.servicioTiempo, themeStyles.text]}>Tiempo estimado: 15 min</Text>
-        </View>
-      </View>
-
-      {/* Selector de Fecha */}
+      {/* Selector de fecha */}
       <View style={[styles.section, themeStyles.card]}>
         <Text style={[styles.sectionTitle, themeStyles.text]}>Selecciona una fecha</Text>
         <TouchableOpacity
@@ -216,7 +253,7 @@ export default function DateScreen() {
           <Ionicons name="chevron-down" size={16} color={isDarkMode ? "#aaa" : "#666"} />
         </TouchableOpacity>
 
-        {/* Modal del Calendario */}
+        {/* Modal calendario */}
         <Modal visible={showCalendar} animationType="slide" transparent={true}>
           <View style={styles.modalOverlay}>
             <View style={[styles.modalContent, themeStyles.card]}>
@@ -233,12 +270,10 @@ export default function DateScreen() {
               </View>
 
               <View style={styles.calendarGrid}>
-                {/* Días de la semana */}
                 {['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'].map((day) => (
                   <Text key={day} style={[styles.weekDay, themeStyles.text]}>{day}</Text>
                 ))}
 
-                {/* Días del mes */}
                 {days.map((day) => {
                   const isAvailable = isDateAvailable(day);
                   const isSelected = selectedDate && day.isSame(selectedDate, 'day');
@@ -288,11 +323,11 @@ export default function DateScreen() {
         </Modal>
       </View>
 
-      {/* Selector de Horario */}
+      {/* Horarios */}
       {selectedDate && (
         <View style={[styles.section, themeStyles.card]}>
           <Text style={[styles.sectionTitle, themeStyles.text]}>
-            Selecciona un horario de inicio para su cita ({selectedDate.format('dddd')})
+            Selecciona un horario de inicio ({selectedDate.format('dddd')})
           </Text>
           <TouchableOpacity
             style={[styles.timeSelector, themeStyles.input]}
@@ -305,7 +340,6 @@ export default function DateScreen() {
             <Ionicons name="chevron-down" size={16} color={isDarkMode ? "#aaa" : "#666"} />
           </TouchableOpacity>
 
-          {/* Modal de Horarios */}
           <Modal visible={showTimePicker} animationType="slide" transparent={true}>
             <View style={styles.modalOverlay}>
               <View style={[styles.modalContent, themeStyles.card]}>
@@ -316,7 +350,6 @@ export default function DateScreen() {
                   keyExtractor={(item) => item}
                   renderItem={({ item }) => {
                     const isAvailable = isTimeAvailable(item);
-                    
                     return (
                       <TouchableOpacity
                         style={[
@@ -359,7 +392,7 @@ export default function DateScreen() {
         </View>
       )}
 
-      {/* Notas adicionales */}
+      {/* Notas */}
       <View style={[styles.section, themeStyles.card]}>
         <Text style={[styles.sectionTitle, themeStyles.text]}>Notas adicionales (opcional)</Text>
         <TextInput
@@ -373,7 +406,7 @@ export default function DateScreen() {
         />
       </View>
 
-      {/* Botón de confirmación */}
+      {/* Botón confirmar */}
       <TouchableOpacity
         style={[
           styles.confirmButton,

@@ -29,7 +29,7 @@ export default function LoginScreen({ navigation }) {
 
     try {
       // ⚠️ CAMBIA la IP/puerto por la de tu backend si usas otra
-      const response = await fetch("https://nearbizbackend2.onrender.com/api/Auth/login", {
+      const response = await fetch("https://nearbizbackend3.vercel.app/api/auth/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

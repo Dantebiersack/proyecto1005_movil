@@ -16,7 +16,7 @@ export default function RegisterScreen({ navigation }) {
     setLoading(true);
 
     try {
-      const response = await fetch("https://nearbizbackend2.onrender.com/api/Usuarios", {
+      const response = await fetch("https://nearbizbackend3.vercel.app/api/Usuarios", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

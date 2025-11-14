@@ -1,106 +1,175 @@
-import { StyleSheet } from 'react-native';
+// styles/DateScreenStyles.js
+import { StyleSheet, Dimensions, Platform } from 'react-native';
+const { width, height } = Dimensions.get("window");
 
 export default StyleSheet.create({
   container: {
     flex: 1,
   },
+  scrollContainer: {
+    flex: 1,
+  },
   contentContainer: {
     paddingBottom: 40,
   },
+
+  // Header
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: 16,
+    paddingHorizontal: 20,
+    paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
+    borderBottomColor: '#E2E8F0',
   },
   backButton: {
-    padding: 4,
+    padding: 8,
+    borderRadius: 12,
+    backgroundColor: '#F8FAFF',
   },
   headerTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#0A2A66',
   },
-  placeholder: {
-    width: 32,
+  headerPlaceholder: {
+    width: 40,
+  },
+
+  // Empresa Card
+  empresaCard: {
+    margin: 20,
+    marginBottom: 16,
+    padding: 20,
+    borderRadius: 20,
+  },
+  empresaHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+  },
+  empresaIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    backgroundColor: '#EFF6FF',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   empresaInfo: {
-    padding: 16,
-    marginBottom: 8,
+    flex: 1,
   },
   empresaNombre: {
-    fontSize: 20,
-    fontWeight: 'bold',
+    fontSize: 18,
+    fontWeight: '700',
     marginBottom: 4,
   },
   empresaDireccion: {
     fontSize: 14,
+    color: '#64748B',
   },
+
+  // Sections
   section: {
-    padding: 16,
-    marginBottom: 8,
+    marginHorizontal: 20,
+    marginBottom: 16,
+    padding: 20,
+    borderRadius: 20,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 16,
   },
   sectionTitle: {
     fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 12,
+    fontWeight: '700',
+    color: '#0A2A66',
   },
+
+  // Técnicos
   tecnicosContainer: {
     flexDirection: 'row',
   },
   tecnicoButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
     paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    borderWidth: 1,
-    marginRight: 8,
+    paddingVertical: 12,
+    borderRadius: 16,
+    backgroundColor: '#F8FAFF',
+    marginRight: 12,
+    borderWidth: 2,
+    borderColor: '#F1F5F9',
+    minWidth: 140,
   },
   tecnicoButtonSelected: {
-    backgroundColor: '#3843c2',
+    backgroundColor: '#0A2A66',
+    borderColor: '#0A2A66',
   },
   tecnicoText: {
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: '600',
+    color: '#0A2A66',
   },
   tecnicoTextSelected: {
-    color: '#fff',
+    color: '#FFFFFF',
   },
+
+  // Servicio Info
   servicioInfo: {
-    padding: 12,
-    borderRadius: 8,
+    padding: 16,
+    borderRadius: 12,
   },
   servicioTexto: {
-    fontSize: 16,
-    marginBottom: 4,
+    fontSize: 15,
+    fontWeight: '600',
+    marginBottom: 8,
+  },
+  servicioMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   servicioTiempo: {
-    fontSize: 14,
+    fontSize: 13,
+    fontWeight: '500',
   },
+
+  // Selectors
   dateSelector: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 1,
-    borderRadius: 8,
-    padding: 12,
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
   },
   dateSelectorText: {
     flex: 1,
-    marginLeft: 8,
-    fontSize: 16,
+    marginLeft: 12,
+    fontSize: 15,
+    fontWeight: '500',
   },
   timeSelector: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 1,
-    borderRadius: 8,
-    padding: 12,
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
   },
   timeSelectorText: {
     flex: 1,
-    marginLeft: 8,
-    fontSize: 16,
+    marginLeft: 12,
+    fontSize: 15,
+    fontWeight: '500',
   },
+
+  // Modals
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',
@@ -108,138 +177,216 @@ export default StyleSheet.create({
     alignItems: 'center',
   },
   modalContent: {
-    borderRadius: 12,
-    padding: 16,
+    borderRadius: 20,
+    padding: 20,
     margin: 20,
-    width: '90%',
-    maxHeight: '80%',
+    width: width - 40,
+    maxHeight: height * 0.8,
   },
+  modalHeader: {
+    marginBottom: 20,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    textAlign: 'center',
+    marginBottom: 4,
+  },
+  modalSubtitle: {
+    fontSize: 14,
+    textAlign: 'center',
+  },
+
+  // Calendar
   calendarHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 20,
+  },
+  calendarNavButton: {
+    padding: 8,
+    borderRadius: 12,
+    backgroundColor: '#F8FAFF',
   },
   calendarTitle: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '700',
+    color: '#0A2A66',
   },
   calendarGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    marginBottom: 16,
+    marginBottom: 20,
   },
   weekDay: {
     width: '14.28%',
     textAlign: 'center',
-    fontWeight: 'bold',
+    fontWeight: '600',
     fontSize: 12,
-    marginBottom: 8,
+    marginBottom: 12,
+    color: '#64748B',
   },
   dayButton: {
     width: '14.28%',
     aspectRatio: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 4,
+    marginBottom: 8,
+    position: 'relative',
   },
   dayText: {
     fontSize: 14,
+    fontWeight: '500',
+    color: '#374151',
   },
   otherMonthDay: {
     opacity: 0.3,
   },
   otherMonthText: {
-    color: '#999',
+    color: '#9CA3AF',
   },
   disabledDay: {
     opacity: 0.3,
   },
   disabledText: {
-    color: '#999',
+    color: '#9CA3AF',
+  },
+  todayDay: {
+    backgroundColor: '#EFF6FF',
+    borderRadius: 20,
+  },
+  todayText: {
+    color: '#0A2A66',
+    fontWeight: '700',
+  },
+  todayIndicator: {
+    position: 'absolute',
+    top: 2,
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#0A2A66',
   },
   selectedDay: {
-    backgroundColor: '#3843c2',
+    backgroundColor: '#0A2A66',
     borderRadius: 20,
   },
   selectedDayText: {
-    color: '#fff',
-    fontWeight: 'bold',
+    color: '#FFFFFF',
+    fontWeight: '700',
   },
   closeCalendarButton: {
-    backgroundColor: '#3843c2',
-    padding: 12,
-    borderRadius: 8,
+    backgroundColor: '#0A2A66',
+    padding: 16,
+    borderRadius: 12,
     alignItems: 'center',
   },
   closeCalendarText: {
-    color: '#fff',
-    fontWeight: 'bold',
+    color: '#FFFFFF',
+    fontWeight: '700',
     fontSize: 16,
   },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    marginBottom: 16,
+
+  // Time Picker
+  timeGrid: {
+    paddingBottom: 8,
   },
   timeSlot: {
     flex: 1,
     margin: 4,
     padding: 12,
-    borderRadius: 8,
+    borderRadius: 12,
     alignItems: 'center',
-    minWidth: '30%',
+    justifyContent: 'center',
+    minWidth: (width - 120) / 3,
+    backgroundColor: '#F8FAFF',
+    borderWidth: 1.5,
+    borderColor: '#F1F5F9',
+    position: 'relative',
   },
   timeSlotDisabled: {
-    opacity: 0.5,
+    backgroundColor: '#F3F4F6',
+    borderColor: '#E5E7EB',
+    opacity: 0.6,
   },
   timeSlotSelected: {
-    backgroundColor: '#3843c2',
+    backgroundColor: '#0A2A66',
+    borderColor: '#0A2A66',
   },
   timeSlotText: {
     fontSize: 12,
+    fontWeight: '600',
+    color: '#374151',
+    textAlign: 'center',
   },
   timeSlotTextDisabled: {
-    color: '#999',
+    color: '#9CA3AF',
   },
   timeSlotTextSelected: {
-    color: '#fff',
-    fontWeight: 'bold',
+    color: '#FFFFFF',
+  },
+  timeSlotIcon: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
   },
   closeTimeButton: {
-    backgroundColor: '#3843c2',
-    padding: 12,
-    borderRadius: 8,
+    backgroundColor: '#0A2A66',
+    padding: 16,
+    borderRadius: 12,
     alignItems: 'center',
     marginTop: 16,
   },
   closeTimeText: {
-    color: '#fff',
-    fontWeight: 'bold',
+    color: '#FFFFFF',
+    fontWeight: '700',
     fontSize: 16,
+  },
+
+  // Notes
+  notesLabel: {
+    fontSize: 14,
+    marginBottom: 8,
   },
   notasInput: {
-    borderWidth: 1,
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
-    textAlignVertical: 'top',
-    minHeight: 80,
-  },
-  confirmButton: {
-    backgroundColor: '#39b58b',
-    margin: 16,
+    borderRadius: 12,
     padding: 16,
-    borderRadius: 8,
+    fontSize: 15,
+    textAlignVertical: 'top',
+    minHeight: 100,
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
+  },
+
+  // Confirm Button
+  confirmButton: {
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: '#0A2A66',
+    marginHorizontal: 20,
+    marginTop: 8,
+    marginBottom: 20,
+    padding: 18,
+    borderRadius: 16,
+    shadowColor: '#0A2A66',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
   },
   confirmButtonDisabled: {
-    backgroundColor: '#ccc',
+    backgroundColor: '#9CA3AF',
+    shadowOpacity: 0.1,
   },
   confirmButtonText: {
-    color: '#fff',
+    color: '#FFFFFF',
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '700',
   },
 });

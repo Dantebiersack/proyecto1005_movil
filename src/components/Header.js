@@ -1,18 +1,19 @@
+// components/Header.js
 import React from "react";
-import { View, Text, TouchableOpacity, Image, StyleSheet } from "react-native";
+import { View, Text, TouchableOpacity, Image } from "react-native";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import styles from "../styles/componentStyles/HeaderStyles";
-
 
 export default function Header({ isDarkMode, setIsDarkMode, themeStyles }) {
   return (
     <View style={styles.header}>
-      <Image
-        source={require("../../assets/LogoNearBiz.jpeg")}
-        style={styles.logo}
-      />
-
-      <Text style={[styles.companyName, themeStyles.text]}>NearBiz</Text>
+      <View style={styles.logoContainer}>
+        <Image
+          source={require("../../assets/LogoNearBiz.jpeg")}
+          style={styles.logo}
+        />
+        <Text style={[styles.companyName, themeStyles.text]}>NearBiz</Text>
+      </View>
 
       <TouchableOpacity
         style={styles.themeButton}
@@ -20,12 +21,10 @@ export default function Header({ isDarkMode, setIsDarkMode, themeStyles }) {
       >
         <Ionicons
           name={isDarkMode ? "moon" : "sunny"}
-          size={28}
-          color={isDarkMode ? "#fff" : "#000"}
+          size={22}
+          color={isDarkMode ? "#3B82F6" : "#0A2A66"}
         />
       </TouchableOpacity>
     </View>
   );
 }
-
-

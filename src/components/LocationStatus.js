@@ -1,6 +1,6 @@
 // components/LocationStatus.js
 import React from "react";
-import { View, Text, TouchableOpacity, ActivityIndicator, StyleSheet } from "react-native";
+import { View, Text, TouchableOpacity, ActivityIndicator } from "react-native";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import styles from "../styles/componentStyles/LocationStatusStyles";
 
@@ -8,7 +8,9 @@ export default function LocationStatus({ themeStyles, userLocation, locationErro
   return (
     <View style={[styles.container, themeStyles.card]}>
       <View style={styles.row}>
-        <Ionicons name="navigate-circle" size={24} color="#39b58b" />
+        <View style={styles.iconContainer}>
+          <Ionicons name="navigate-circle" size={20} color="#0A2A66" />
+        </View>
         <Text style={[styles.title, themeStyles.text]}>Estado de ubicación</Text>
       </View>
 
@@ -21,8 +23,8 @@ export default function LocationStatus({ themeStyles, userLocation, locationErro
         </View>
       ) : userLocation ? (
         <View style={styles.statusContainer}>
-          <Text style={[styles.text, themeStyles.text]}>
-            ✅ Ubicación obtenida ({userLocation.latitude.toFixed(3)}, {userLocation.longitude.toFixed(3)})
+          <Text style={[styles.text, themeStyles.textSecondary]}>
+            ✅ Ubicación obtenida correctamente
           </Text>
           <TouchableOpacity style={styles.refreshButton} onPress={onUpdateLocation}>
             <Text style={styles.refreshButtonText}>Actualizar</Text>
@@ -30,11 +32,10 @@ export default function LocationStatus({ themeStyles, userLocation, locationErro
         </View>
       ) : (
         <View style={styles.loadingRow}>
-          <ActivityIndicator size="small" color="#39b58b" />
-          <Text style={[styles.text, themeStyles.text]}>Obteniendo ubicación...</Text>
+          <ActivityIndicator size="small" color="#0A2A66" />
+          <Text style={[styles.text, themeStyles.textSecondary]}>Obteniendo ubicación...</Text>
         </View>
       )}
     </View>
   );
 }
-

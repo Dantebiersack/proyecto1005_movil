@@ -1,162 +1,102 @@
+// styles/HomeScreenStyles.js
 import { StyleSheet, Dimensions } from 'react-native';
-const { width } = Dimensions.get("window");
-
-// 🎨 Paleta elegante
-const PRIMARY = "#0A2A66";      // Azul elegante
-const PRIMARY_LIGHT = "#1A3E8C";
-const PRIMARY_SOFT = "#E5ECF8";
+const { width, height } = Dimensions.get("window");
 
 export default StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#0046d1ff",
   },
-
-  // ===========================
-  // 🔄 Loading
-  // ===========================
+  
+  // 🔄 Loading States
   loadingContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+    backgroundColor: "#F8FAFF",
   },
   loadingText: {
-    marginTop: 10,
+    marginTop: 16,
     fontSize: 16,
-    color: PRIMARY,
     fontWeight: "600",
+    color: "#0A2A66",
   },
 
-  // ===========================
-  // 📝 Resultados
-  // ===========================
+  // 📊 Results Section
   resultsContainer: {
-    padding: 16,
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 20,
   },
-
   resultsHeader: {
-    marginBottom: 16,
+    marginBottom: 20,
+    paddingHorizontal: 4,
   },
-
   resultsTitle: {
-    fontSize: 22,
+    fontSize: 28,
     fontWeight: "800",
-    color: PRIMARY,
+    marginBottom: 8,
+    color: "#0A2A66",
   },
-
   distanceInfo: {
-    fontSize: 14,
-    opacity: 0.7,
-    color: "#1F2937",
+    fontSize: 15,
+    fontWeight: "500",
+    color: "#64748B",
   },
 
-  // ===========================
-  // ❌ No hay resultados
-  // ===========================
+  // ❌ No Results
   noResults: {
     alignItems: "center",
-    padding: 24,
-    marginTop: 40,
+    paddingVertical: 60,
+    paddingHorizontal: 40,
   },
-
+  noResultsIcon: {
+    fontSize: 64,
+    marginBottom: 16,
+    color: "#94A3B8",
+  },
   noResultsText: {
     textAlign: "center",
     fontSize: 18,
-    marginBottom: 6,
-    color: PRIMARY,
     fontWeight: "700",
+    marginBottom: 8,
+    color: "#0A2A66",
+    lineHeight: 24,
   },
-
   noResultsSubtext: {
     textAlign: "center",
-    fontSize: 14,
-    opacity: 0.7,
-    color: "#4B5563",
-  },
-
-  // ===========================
-  // 🧩 Tarjetas profesionales
-  // ===========================
-  card: {
-    width: "100%",
-    backgroundColor: "#22007fff",
-    padding: 18,
-    borderRadius: 16,
-    marginBottom: 16,
-
-    // Sombra elegante
-    shadowColor: "#0A0A0A",
-    shadowOpacity: 0.09,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 4,
-
-    borderLeftWidth: 4,
-    borderLeftColor: PRIMARY,
-  },
-
-  cardTitle: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: PRIMARY,
-  },
-
-  cardSubtitle: {
     fontSize: 15,
-    color: "#6B7280",
-    marginTop: 4,
+    color: "#64748B",
+    lineHeight: 22,
   },
 
-  // ===========================
-  // 🔘 Botón principal
-  // ===========================
-  button: {
-    width: width * 0.88,
-    alignSelf: "center",
-    paddingVertical: 16,
-    backgroundColor: PRIMARY,
-    borderRadius: 12,
-    alignItems: "center",
-
-    shadowColor: PRIMARY,
-    shadowOpacity: 0.25,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 5,
-
-    marginTop: 22,
+  // 🆕 Floating Action Button (opcional)
+  fabContainer: {
+    position: 'absolute',
+    bottom: 30,
+    right: 20,
+    zIndex: 1000,
+  },
+  fab: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: "#0A2A66",
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: "#0A2A66",
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
 
-  buttonText: {
-    fontSize: 16,
-    color: "#fff",
-    fontWeight: "700",
-  },
-
-  buttonDisabled: {
-    backgroundColor: PRIMARY_LIGHT,
-    opacity: 0.6,
-  },
-
-  // ===========================
-  // 🌙 Modo oscuro
-  // ===========================
-  darkContainer: {
-    backgroundColor: "#0C0C0E",
-  },
-
-  darkText: {
-    color: "#FFF",
-  },
-
-  darkCard: {
-    backgroundColor: "#0855eeff",
-    borderLeftColor: PRIMARY_LIGHT,
-    borderLeftWidth: 4,
-    shadowOpacity: 0,
-  },
-
-  darkSubtitle: {
-    color: "#4f70cbff",
+  // 📱 Responsive Design
+  responsiveCard: {
+    maxWidth: 400,
+    alignSelf: 'center',
+    width: '100%',
   },
 });

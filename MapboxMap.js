@@ -2,7 +2,7 @@ import * as React from 'react';
 import { StyleSheet, View, Text, TouchableOpacity } from 'react-native';
 import MapView, { Marker, Polyline } from 'react-native-maps';
 import * as Location from 'expo-location';
-
+//Mapa
 export default function MapboxMap({ route }) {
   const { empresa, userLocation } = route.params;
 

@@ -28,7 +28,6 @@ export default function LoginScreen({ navigation }) {
     setLoading(true);
 
     try {
-      // ⚠️ CAMBIA la IP/puerto por la de tu backend si usas otra
       const response = await fetch("https://nearbizbackend2.onrender.com/api/Auth/login", {
         method: "POST",
         headers: {
@@ -40,30 +39,26 @@ export default function LoginScreen({ navigation }) {
         }),
       });
 
-      // 🚫 Si la API devuelve 401 u otro error
       if (!response.ok) {
         const message = await response.text();
         throw new Error(message || "Usuario o contraseña incorrectos");
       }
 
-      // ✅ Si el login fue exitoso
       const data = await response.json();
-      console.log("Inicio de sesión correcto:", data);
 
       Alert.alert("Bienvenido", `Hola ${data.nombre}`);
       navigation.navigate("Home");
 
     } catch (error) {
-      console.error("Error al iniciar sesión:", error);
       Alert.alert("Error", error.message || "Usuario o contraseña incorrectos");
     } finally {
       setLoading(false);
     }
   };
 
- // Nueva función para registrarse
+  // Nueva función para registrarse
   const handleRegister = () => {
-    navigation.navigate("RegisterScreen"); // asegúrate de tener una pantalla llamada "RegisterScreen"
+    navigation.navigate("RegisterScreen");
   };
 
   return (
@@ -80,7 +75,6 @@ export default function LoginScreen({ navigation }) {
           contentContainerStyle={styles.container}
           showsVerticalScrollIndicator={false}
         >
-          {/* LOGO */}
           <View style={styles.leftSection}>
             <Image
               source={require("../../assets/LogoNearBiz.jpeg")}
@@ -88,7 +82,6 @@ export default function LoginScreen({ navigation }) {
             />
           </View>
 
-          {/* FORMULARIO */}
           <View style={styles.rightSection}>
             <View style={styles.card}>
               <Text style={styles.label}>CORREO</Text>

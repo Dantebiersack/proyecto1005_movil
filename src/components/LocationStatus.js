@@ -24,7 +24,7 @@ export default function LocationStatus({ themeStyles, userLocation, locationErro
       ) : userLocation ? (
         <View style={styles.statusContainer}>
           <Text style={[styles.text, themeStyles.textSecondary]}>
-            ✅ Ubicación obtenida correctamente
+            Ubicación obtenida correctamente
           </Text>
           <TouchableOpacity style={styles.refreshButton} onPress={onUpdateLocation}>
             <Text style={styles.refreshButtonText}>Actualizar</Text>

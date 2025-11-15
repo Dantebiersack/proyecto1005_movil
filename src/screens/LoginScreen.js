@@ -49,7 +49,6 @@ export default function LoginScreen({ navigation }) {
 
       const data = await response.json();
 
-      Alert.alert("Bienvenido", `Hola ${data.nombre}`);
       navigation.navigate("Home");
 
     } catch (error) {

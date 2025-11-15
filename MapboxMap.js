@@ -2,7 +2,8 @@ import * as React from 'react';
 import { StyleSheet, View, Text, TouchableOpacity } from 'react-native';
 import MapView, { Marker, Polyline } from 'react-native-maps';
 import * as Location from 'expo-location';
-//Mapa
+import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
+
 export default function MapboxMap({ route }) {
   const { empresa, userLocation } = route.params;
 
@@ -44,13 +45,14 @@ export default function MapboxMap({ route }) {
     }
   };
 
-  //  Obtener ubicación actual del usuario
+  // Obtener ubicación actual
   React.useEffect(() => {
     (async () => {
       try {
         let { status } = await Location.requestForegroundPermissionsAsync();
         if (status !== 'granted') {
           setErrorMsg('Permiso de ubicación denegado.');
+
           if (userLocation) {
             setCurrentUserLocation(userLocation);
             calculateMapRegion(userLocation, empresa);
@@ -83,7 +85,7 @@ export default function MapboxMap({ route }) {
     })();
   }, []);
 
-  // Recalcular ruta al cambiar modo de transporte
+  // Cuando cambia el modo de transporte
   React.useEffect(() => {
     if (currentUserLocation && empresa) {
       fetchRouteFromMapbox(
@@ -97,7 +99,7 @@ export default function MapboxMap({ route }) {
     }
   }, [travelMode]);
 
-  // Calcular la región visible del mapa
+  // Calcula el área visible
   const calculateMapRegion = (userCoords, business) => {
     if (!userCoords || !business) return;
 
@@ -139,27 +141,26 @@ export default function MapboxMap({ route }) {
         style={styles.map}
         initialRegion={region}
         region={region}
-        showsUserLocation={true}
+        showsUserLocation={false}
         onRegionChangeComplete={setRegion}
       >
-        {/* Marcadores */}
+        {/* 📍 Marcador del usuario */}
         {currentUserLocation && (
-          <Marker
-            coordinate={currentUserLocation}
-            title="Mi ubicación"
-            pinColor="blue"
-          />
+          <Marker coordinate={currentUserLocation}>
+            <FontAwesome5 name="map-marker-alt" size={32} color="#007AFF" />
+          </Marker>
         )}
+
+        {/* 📍 Marcador de la empresa */}
         {empresa && (
           <Marker
             coordinate={{
               latitude: empresa.CoordenadasLat,
               longitude: empresa.CoordenadasLng,
             }}
-            title={empresa.Nombre}
-            description={empresa.Direccion}
-            pinColor="red"
-          />
+          >
+            <FontAwesome5 name="map-marker-alt" size={32} color="#FF3B30" />
+          </Marker>
         )}
 
         {/* Ruta */}
@@ -172,7 +173,7 @@ export default function MapboxMap({ route }) {
         )}
       </MapView>
 
-      {/* 🔹 Panel de información abajo */}
+      {/* Tarjeta inferior */}
       <View style={styles.bottomInfoCard}>
         <Text style={styles.businessName}>{empresa.Nombre}</Text>
         <Text style={styles.businessAddress}>{empresa.Direccion}</Text>
@@ -184,7 +185,7 @@ export default function MapboxMap({ route }) {
             : 'Calculando ruta...'}
         </Text>
 
-        {/* Selector de modo de transporte */}
+        {/* Selector de modo */}
         <View style={styles.modeSelector}>
           <TouchableOpacity
             style={[
@@ -193,8 +194,13 @@ export default function MapboxMap({ route }) {
             ]}
             onPress={() => setTravelMode('driving')}
           >
-            <Text style={styles.modeIcon}>🚗</Text>
+            <FontAwesome5
+              name="car"
+              size={20}
+              color={travelMode === 'driving' ? 'white' : 'black'}
+            />
           </TouchableOpacity>
+
           <TouchableOpacity
             style={[
               styles.modeButton,
@@ -202,8 +208,13 @@ export default function MapboxMap({ route }) {
             ]}
             onPress={() => setTravelMode('walking')}
           >
-            <Text style={styles.modeIcon}>🚶‍♂️</Text>
+            <FontAwesome5
+              name="walking"
+              size={20}
+              color={travelMode === 'walking' ? 'white' : 'black'}
+            />
           </TouchableOpacity>
+
           <TouchableOpacity
             style={[
               styles.modeButton,
@@ -211,7 +222,11 @@ export default function MapboxMap({ route }) {
             ]}
             onPress={() => setTravelMode('cycling')}
           >
-            <Text style={styles.modeIcon}>🚴‍♂️</Text>
+            <FontAwesome5
+              name="bicycle"
+              size={20}
+              color={travelMode === 'cycling' ? 'white' : 'black'}
+            />
           </TouchableOpacity>
         </View>
       </View>
@@ -271,8 +286,5 @@ const styles = StyleSheet.create({
   },
   modeSelected: {
     backgroundColor: '#007AFF',
-  },
-  modeIcon: {
-    fontSize: 20,
   },
 });

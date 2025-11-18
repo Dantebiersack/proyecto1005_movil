@@ -6,6 +6,8 @@ import HomeScreen from './src/screens/HomeScreen';
 import MapboxMap from './MapboxMap';
 import DateScreen from './src/screens/DateScreen';
 import RegisterScreen from "./src/screens/RegisterScreen";
+import NotificationsScreen from "./src/screens/NotificationsScreen";
+
 
 
 const Stack = createNativeStackNavigator();
@@ -19,6 +21,11 @@ export default function App() {
         <Stack.Screen name="Mapa" component={MapboxMap} />
         <Stack.Screen name="DateScreen" component={DateScreen} />
         <Stack.Screen name="RegisterScreen" component={RegisterScreen} />
+<Stack.Screen 
+  name="NotificationsScreen" 
+  component={NotificationsScreen} 
+  options={{ title: "Notificaciones" }}
+/>
 
       </Stack.Navigator>
     </NavigationContainer>

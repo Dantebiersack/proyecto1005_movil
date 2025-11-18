@@ -13,6 +13,17 @@ export default StyleSheet.create({
     paddingBottom: 40,
   },
 
+  // Loading States
+  loadingContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    flex: 1,
+  },
+  loadingText: {
+    marginTop: 10,
+    fontSize: 16,
+  },
+
   // Header
   header: {
     flexDirection: 'row',
@@ -89,14 +100,62 @@ export default StyleSheet.create({
     color: '#0A2A66',
   },
 
+  // Service Selector
+  serviceSelector: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
+  },
+  serviceSelectorText: {
+    flex: 1,
+    marginLeft: 12,
+    fontSize: 15,
+    fontWeight: '500',
+  },
+
+  // Service Modal Items
+  serviceItem: {
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E2E8F0',
+  },
+  serviceItemSelected: {
+    backgroundColor: '#F0F7FF',
+    borderLeftWidth: 3,
+    borderLeftColor: '#0A2A66',
+    marginLeft: -3,
+  },
+  serviceInfo: {
+    flex: 1,
+  },
+  serviceName: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 4,
+    color: '#1E293B',
+  },
+  serviceDetails: {
+    fontSize: 14,
+    marginBottom: 4,
+    color: '#64748B',
+  },
+  serviceDescription: {
+    fontSize: 12,
+    fontStyle: 'italic',
+    color: '#94A3B8',
+  },
+
   // Técnicos
   tecnicosContainer: {
     flexDirection: 'row',
   },
   tecnicoButton: {
-    flexDirection: 'row',
+    flexDirection: 'column',
     alignItems: 'center',
-    gap: 8,
+    gap: 4,
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderRadius: 16,
@@ -104,7 +163,7 @@ export default StyleSheet.create({
     marginRight: 12,
     borderWidth: 2,
     borderColor: '#F1F5F9',
-    minWidth: 140,
+    minWidth: 120,
   },
   tecnicoButtonSelected: {
     backgroundColor: '#0A2A66',
@@ -114,9 +173,18 @@ export default StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: '#0A2A66',
+    textAlign: 'center',
   },
   tecnicoTextSelected: {
     color: '#FFFFFF',
+  },
+  tecnicoRol: {
+    fontSize: 12,
+    color: '#64748B',
+    textAlign: 'center',
+  },
+  tecnicoRolSelected: {
+    color: '#E2E8F0',
   },
 
   // Servicio Info
@@ -339,6 +407,20 @@ export default StyleSheet.create({
     marginTop: 16,
   },
   closeTimeText: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+    fontSize: 16,
+  },
+
+  // Modal Buttons (genéricos para reutilizar)
+  closeModalButton: {
+    backgroundColor: '#0A2A66',
+    padding: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginTop: 16,
+  },
+  closeModalText: {
     color: '#FFFFFF',
     fontWeight: '700',
     fontSize: 16,

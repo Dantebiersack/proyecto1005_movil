@@ -25,31 +25,73 @@ export default function RegisterScreen({ navigation }) {
       return;
     }
 
+    // Validación básica de email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      Alert.alert("Error", "Por favor ingresa un email válido.");
+      return;
+    }
+
+    // Validación de contraseña
+    if (contrasena.length < 6) {
+      Alert.alert("Error", "La contraseña debe tener al menos 6 caracteres.");
+      return;
+    }
+
     setLoading(true);
 
     try {
-      const response = await fetch("https://nearbizbackend3.vercel.app/api/Usuarios", {
+      console.log('📤 Enviando datos de registro:', {
+        Nombre: nombre,
+        Email: email,
+        ContrasenaHash: contrasena,
+        IdRol: 4,
+        Token: null
+      });
+
+      const response = await fetch("https://nearbizbackend3.vercel.app/api/usuarios", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
         body: JSON.stringify({
-          nombre,
-          email,
-          contrasenaHash: contrasena,
-          idRol: 4,
-          token: null,
+          Nombre: nombre,           // ✅ PascalCase
+          Email: email,             // ✅ PascalCase  
+          ContrasenaHash: contrasena, // ✅ PascalCase (corregido)
+          IdRol: 4,                 // ✅ PascalCase
+          Token: null               // ✅ PascalCase
         }),
       });
 
+      console.log('📨 Respuesta del servidor - Status:', response.status);
+      
       if (response.ok) {
-        Alert.alert("Registro exitoso", "Tu cuenta ha sido creada.");
-        navigation.navigate("Login");
+        const data = await response.json();
+        console.log('✅ Registro exitoso:', data);
+        
+        Alert.alert(
+          "Registro exitoso", 
+          "Tu cuenta ha sido creada correctamente.",
+          [{ text: 'OK', onPress: () => navigation.navigate("Login") }]
+        );
       } else {
         const errorText = await response.text();
-        Alert.alert("Error", errorText || "No se pudo registrar.");
+        console.error('❌ Error en registro:', errorText);
+        
+        let mensajeError = "No se pudo registrar. Intenta nuevamente.";
+        
+        if (errorText.includes('duplicate key') || errorText.includes('email')) {
+          mensajeError = "Este email ya está registrado.";
+        } else if (errorText.includes('nombre')) {
+          mensajeError = "El nombre es requerido.";
+        }
+        
+        Alert.alert("Error", mensajeError);
       }
     } catch (error) {
-      Alert.alert("Error", "No se pudo conectar con el servidor.");
-      console.error(error);
+      console.error('❌ Error de conexión:', error);
+      Alert.alert("Error", "No se pudo conectar con el servidor. Verifica tu conexión.");
     } finally {
       setLoading(false);
     }
@@ -86,6 +128,7 @@ export default function RegisterScreen({ navigation }) {
               placeholderTextColor="#ccc"
               value={nombre}
               onChangeText={setNombre}
+              autoCapitalize="words"
             />
 
             <Text style={styles.label}>CORREO ELECTRÓNICO</Text>
@@ -97,20 +140,22 @@ export default function RegisterScreen({ navigation }) {
               onChangeText={setEmail}
               keyboardType="email-address"
               autoCapitalize="none"
+              autoComplete="email"
             />
 
             <Text style={styles.label}>CONTRASEÑA</Text>
             <TextInput
               style={styles.input}
-              placeholder="********"
+              placeholder="Mínimo 6 caracteres"
               placeholderTextColor="#ccc"
               secureTextEntry
               value={contrasena}
               onChangeText={setContrasena}
+              autoComplete="password"
             />
 
             <TouchableOpacity
-              style={styles.registerButton}
+              style={[styles.registerButton, loading && styles.registerButtonDisabled]}
               onPress={handleRegister}
               disabled={loading}
             >
@@ -119,7 +164,10 @@ export default function RegisterScreen({ navigation }) {
               </Text>
             </TouchableOpacity>
 
-            <TouchableOpacity onPress={() => navigation.navigate("Login")}>
+            <TouchableOpacity 
+              style={styles.loginLinkButton}
+              onPress={() => navigation.navigate("Login")}
+            >
               <Text style={styles.loginText}>
                 ¿Ya tienes cuenta?{" "}
                 <Text style={styles.loginLink}>Inicia sesión</Text>
@@ -193,6 +241,7 @@ const styles = StyleSheet.create({
     padding: 12,
     marginTop: 6,
     color: "#000",
+    fontSize: 16,
   },
 
   registerButton: {
@@ -204,16 +253,25 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
 
+  registerButtonDisabled: {
+    backgroundColor: "#6B7280",
+    opacity: 0.7,
+  },
+
   registerButtonText: {
     color: "#fff",
     fontWeight: "700",
     fontSize: 16,
   },
 
+  loginLinkButton: {
+    marginTop: 18,
+    padding: 8,
+  },
+
   loginText: {
     color: "#ddd",
     textAlign: "center",
-    marginTop: 18,
     fontSize: 14,
   },
 

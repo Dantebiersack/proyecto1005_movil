@@ -8,17 +8,22 @@ import {
   Alert,
   Modal,
   FlatList,
-  TextInput
+  TextInput,
+  ActivityIndicator
 } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import moment from 'moment';
 import 'moment/locale/es';
 import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import styles from "../styles/DateScreenStyles";
 import { lightTheme, darkTheme } from "../styles/themes";
 
 moment.locale('es');
+
+// Configuración de axios
+const API_BASE_URL = 'https://nearbizbackend3.vercel.app/api';
 
 export default function DateScreen() {
   const route = useRoute();
@@ -27,131 +32,324 @@ export default function DateScreen() {
 
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedTime, setSelectedTime] = useState('');
-  const [selectedTecnico, setSelectedTecnico] = useState('');
+  const [selectedTecnico, setSelectedTecnico] = useState(null);
+  const [selectedServicio, setSelectedServicio] = useState(null);
   const [showCalendar, setShowCalendar] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
+  const [showServiciosModal, setShowServiciosModal] = useState(false);
   const [notas, setNotas] = useState('');
   const [currentMonth, setCurrentMonth] = useState(moment());
   const [horariosOcupados, setHorariosOcupados] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [tecnicos, setTecnicos] = useState([]);
+  const [servicios, setServicios] = useState([]);
+  const [clienteActual, setClienteActual] = useState(null);
+  const [usuarioActual, setUsuarioActual] = useState(null);
+  const [loadingData, setLoadingData] = useState(true);
 
   const themeStyles = isDarkMode ? darkTheme : lightTheme;
 
-  const tecnicos = [
-    { id: 1, nombre: 'Juan Pérez' },
-    { id: 2, nombre: 'María García' },
-    { id: 3, nombre: 'Carlos López' },
-  ];
+  // Función para obtener el usuario autenticado
+  const obtenerUsuarioAutenticado = async () => {
+    try {
+      const userData = await AsyncStorage.getItem('userData');
+      if (userData) {
+        return JSON.parse(userData);
+      }
+      return null;
+    } catch (error) {
+      console.error('Error obteniendo usuario:', error);
+      return null;
+    }
+  };
+
+  // Cargar datos iniciales
+  useEffect(() => {
+    cargarDatosIniciales();
+  }, [empresa]);
+
+  const cargarDatosIniciales = async () => {
+    try {
+      setLoadingData(true);
+      
+      // 1. OBTENER USUARIO AUTENTICADO
+      const usuario = await obtenerUsuarioAutenticado();
+      
+      if (!usuario) {
+        Alert.alert(
+          'Sesión requerida', 
+          'Debes iniciar sesión para agendar una cita',
+          [{ text: 'OK', onPress: () => navigation.navigate('Login') }]
+        );
+        setLoadingData(false);
+        return;
+      }
+      
+      setUsuarioActual(usuario);
+      console.log('Usuario autenticado:', usuario);
+
+      // 2. BUSCAR CLIENTE ASOCIADO AL USUARIO
+      const clientesRes = await axios.get(`${API_BASE_URL}/clientes`);
+      const cliente = clientesRes.data.find(c => c.IdUsuario === usuario.IdUsuario);
+      
+      if (!cliente) {
+        Alert.alert(
+          'Cliente no encontrado', 
+          'Tu usuario no tiene un cliente asociado. Contacta al administrador.',
+          [{ text: 'OK', onPress: () => navigation.goBack() }]
+        );
+        setLoadingData(false);
+        return;
+      }
+      
+      setClienteActual(cliente);
+      console.log('Cliente encontrado:', cliente);
+
+      // 3. CARGAR SERVICIOS del negocio
+      const serviciosRes = await axios.get(`${API_BASE_URL}/servicios?idNegocio=${empresa.IdNegocio}`);
+      if (serviciosRes.data.length === 0) {
+        Alert.alert('Info', 'Este negocio no tiene servicios disponibles');
+      }
+      setServicios(serviciosRes.data);
+
+      // 4. CARGAR TÉCNICOS (personal) del negocio CON SUS NOMBRES REALES
+      const personalRes = await axios.get(`${API_BASE_URL}/personal?idNegocio=${empresa.IdNegocio}`);
+      
+      // Obtener nombres reales de los técnicos
+      const tecnicosConNombres = await Promise.all(
+        personalRes.data.map(async (persona) => {
+          try {
+            const usuarioRes = await axios.get(`${API_BASE_URL}/usuarios/${persona.IdUsuario}`);
+            return {
+              IdPersonal: persona.IdPersonal,
+              IdUsuario: persona.IdUsuario,
+              Nombre: usuarioRes.data.Nombre,
+              RolEnNegocio: persona.RolEnNegocio
+            };
+          } catch (error) {
+            console.error('Error cargando usuario del técnico:', error);
+            return {
+              IdPersonal: persona.IdPersonal,
+              IdUsuario: persona.IdUsuario,
+              Nombre: `Técnico ${persona.IdPersonal}`,
+              RolEnNegocio: persona.RolEnNegocio
+            };
+          }
+        })
+      );
+      
+      setTecnicos(tecnicosConNombres);
+
+      // 5. Seleccionar primer servicio y técnico por defecto
+      if (serviciosRes.data.length > 0) {
+        setSelectedServicio(serviciosRes.data[0]);
+      }
+      if (tecnicosConNombres.length > 0) {
+        setSelectedTecnico(tecnicosConNombres[0]);
+      }
+
+      console.log('Datos cargados exitosamente');
+
+    } catch (error) {
+      console.error('Error cargando datos:', error);
+      Alert.alert('Error', 'No se pudieron cargar los datos del negocio');
+    } finally {
+      setLoadingData(false);
+    }
+  };
 
   const horariosDisponibles = [
-    '8:00 am', '8:15 am', '8:30 am', '8:45 am',
-    '9:00 am', '9:15 am', '9:30 am', '9:45 am',
-    '10:00 am', '10:15 am', '10:30 am', '10:45 am',
-    '11:00 am', '11:15 am', '11:30 am', '11:45 am',
-    '12:00 pm', '12:15 pm', '12:30 pm', '12:45 pm',
-    '1:00 pm', '1:15 pm', '1:30 pm', '1:45 pm',
-    '2:00 pm', '2:15 pm', '2:30 pm', '2:45 pm',
-    '3:00 pm', '3:15 pm', '3:30 pm', '3:45 pm',
-    '4:00 pm', '4:15 pm', '4:30 pm', '4:45 pm',
-    '5:00 pm', '5:15 pm', '5:30 pm', '5:45 pm',
+    '8:00', '8:15', '8:30', '8:45',
+    '9:00', '9:15', '9:30', '9:45',
+    '10:00', '10:15', '10:30', '10:45',
+    '11:00', '11:15', '11:30', '11:45',
+    '12:00', '12:15', '12:30', '12:45',
+    '13:00', '13:15', '13:30', '13:45',
+    '14:00', '14:15', '14:30', '14:45',
+    '15:00', '15:15', '15:30', '15:45',
+    '16:00', '16:15', '16:30', '16:45',
+    '17:00', '17:15', '17:30', '17:45',
   ];
 
   // Consultar horarios ocupados desde backend
   const cargarHorariosOcupados = async (fecha, tecnicoId) => {
     try {
-      const res = await axios.get('https://nearbizbackend3.vercel.app/api/citas');
+      const res = await axios.get(`${API_BASE_URL}/citas?idTecnico=${tecnicoId}`);
+      
       const citas = res.data.filter(
         c =>
-          c.fechaCita === fecha &&
-          c.idTecnico === tecnicoId &&
-          c.estado !== 'cancelada'
+          c.FechaCita === fecha &&
+          c.IdTecnico === tecnicoId &&
+          c.Estado !== 'cancelada'
       );
 
       const ocupados = citas.map(c => {
-        const start = moment(c.horaInicio, 'HH:mm:ss').format('h:mm a');
-        return `${fecha} ${start}`;
+        const hora = c.HoraInicio.split(':').slice(0, 2).join(':');
+        return `${fecha} ${hora}`;
       });
 
       setHorariosOcupados(ocupados);
     } catch (err) {
       console.error('Error al obtener citas:', err.message);
+      Alert.alert('Error', 'No se pudieron cargar los horarios ocupados');
     }
   };
 
   useEffect(() => {
     if (selectedDate && selectedTecnico) {
-      const tecnicoId = tecnicos.find(t => t.nombre === selectedTecnico)?.id || 1;
-      cargarHorariosOcupados(selectedDate.format('YYYY-MM-DD'), tecnicoId);
+      cargarHorariosOcupados(selectedDate.format('YYYY-MM-DD'), selectedTecnico.IdPersonal);
     }
   }, [selectedDate, selectedTecnico]);
 
   const isTimeAvailable = (time) => {
     if (!selectedDate || !selectedTecnico) return false;
-    const fechaHora = `${selectedDate.format('YYYY-MM-DD')} ${time}`;
+    
+    const time24h = moment(time, 'HH:mm').format('HH:mm');
+    const fechaHora = `${selectedDate.format('YYYY-MM-DD')} ${time24h}`;
+    
     if (horariosOcupados.includes(fechaHora)) return false;
 
     const now = moment();
-    const selectedDateTime = moment(`${selectedDate.format('YYYY-MM-DD')} ${time}`, 'YYYY-MM-DD h:mm a');
+    const selectedDateTime = moment(`${selectedDate.format('YYYY-MM-DD')} ${time24h}`, 'YYYY-MM-DD HH:mm');
     return selectedDateTime.isAfter(now);
   };
 
-  const confirmarCita = async () => {
-    if (!selectedTecnico) {
-      Alert.alert('Error', 'Por favor selecciona un técnico');
-      return;
-    }
-    if (!selectedDate) {
-      Alert.alert('Error', 'Por favor selecciona una fecha');
-      return;
-    }
-    if (!selectedTime) {
-      Alert.alert('Error', 'Por favor selecciona un horario');
-      return;
-    }
+const confirmarCita = async () => {
+  if (!selectedTecnico || !selectedDate || !selectedTime || !selectedServicio || !clienteActual) {
+    Alert.alert('Error', 'Por favor completa todos los campos requeridos');
+    return;
+  }
 
-    setLoading(true);
+  setLoading(true);
+  try {
+    const fechaCita = selectedDate.format('YYYY-MM-DD');
+    const horaInicio = `${selectedTime}:00`;
+    
+    // Calcular hora fin basada en la duración del servicio
+    const horaFinMoment = moment(selectedTime, 'HH:mm')
+      .add(selectedServicio.DuracionMinutos || 30, 'minutes');
+    const horaFin = horaFinMoment.format('HH:mm:ss');
+
+    // ✅ CORREGIDO: Usar SNAKE_CASE que espera el backend
+    const nuevaCita = {
+      id_cliente: Number(clienteActual.IdCliente),        // ✅ snake_case
+      id_tecnico: Number(selectedTecnico.IdPersonal),     // ✅ snake_case
+      id_servicio: Number(selectedServicio.IdServicio),   // ✅ snake_case
+      fecha_cita: fechaCita,                              // ✅ snake_case
+      hora_inicio: horaInicio,                            // ✅ snake_case
+      hora_fin: horaFin,                                  // ✅ snake_case
+      estado: 'pendiente',
+      motivo_cancelacion: null                            // ✅ snake_case
+    };
+
+    console.log('📤 ENVIANDO CITA CON SNAKE_CASE:', JSON.stringify(nuevaCita, null, 2));
+
+    // 🔍 VERIFICAR QUE LOS DATOS EXISTEN EN LA BD
+    console.log('🔄 Verificando existencia en BD...');
+    
     try {
-      const fechaCita = selectedDate.format('YYYY-MM-DD');
-      const horaInicioMoment = moment(selectedTime, ['h:mm A', 'HH:mm']);
-      const horaInicio = horaInicioMoment.format('HH:mm:ss');
-      const horaFinMoment = horaInicioMoment.clone().add(15, 'minutes');
-      const horaFin = horaFinMoment.format('HH:mm:ss');
-
-      const id_cliente = 1;
-      const id_tecnico = tecnicos.find(t => t.nombre === selectedTecnico)?.id || 1;
-      const id_servicio = 1;
-
-      const nuevaCita = {
-        id_cliente,
-        id_tecnico,
-        id_servicio,
-        fecha_cita: fechaCita,
-        hora_inicio: horaInicio,
-        hora_fin: horaFin,
-        estado: 'pendiente',
-        motivo_cancelacion: null
-      };
-
-      const response = await axios.post(
-        'https://nearbizbackend2.onrender.com/api/citas',
-        nuevaCita
-      );
-
-      Alert.alert(
-        '¡Cita Agendada! 🎉',
-        `Tu cita ha sido agendada para el ${selectedDate.format('DD/MM/YYYY')} a las ${selectedTime} con ${selectedTecnico}`,
-        [{ text: 'OK', onPress: () => navigation.goBack() }]
-      );
+      const clienteCheck = await axios.get(`${API_BASE_URL}/clientes/${clienteActual.IdCliente}`);
+      console.log('✅ Cliente existe en BD:', clienteCheck.data);
     } catch (error) {
-      console.error('Error al agendar cita:', error.response?.data || error.message);
-      Alert.alert(
-        'Error',
-        error.response?.data?.message || 'Ocurrió un error al agendar la cita.'
-      );
-    } finally {
-      setLoading(false);
+      console.error('❌ Cliente NO existe en BD:', error.response?.data);
+      throw new Error(`Cliente con ID ${clienteActual.IdCliente} no encontrado en BD`);
     }
-  };
+
+    try {
+      const tecnicoCheck = await axios.get(`${API_BASE_URL}/personal/${selectedTecnico.IdPersonal}`);
+      console.log('✅ Técnico existe en BD:', tecnicoCheck.data);
+    } catch (error) {
+      console.error('❌ Técnico NO existe en BD:', error.response?.data);
+      throw new Error(`Técnico con ID ${selectedTecnico.IdPersonal} no encontrado en BD`);
+    }
+
+    try {
+      const servicioCheck = await axios.get(`${API_BASE_URL}/servicios/${selectedServicio.IdServicio}`);
+      console.log('✅ Servicio existe en BD:', servicioCheck.data);
+    } catch (error) {
+      console.error('❌ Servicio NO existe en BD:', error.response?.data);
+      throw new Error(`Servicio con ID ${selectedServicio.IdServicio} no encontrado en BD`);
+    }
+
+    // 🚀 ENVIAR LA CITA CON SNAKE_CASE
+    console.log('🚀 Realizando POST a /citas con snake_case...');
+    const response = await axios.post(
+      `${API_BASE_URL}/citas`,
+      nuevaCita,
+      {
+        timeout: 15000,
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        }
+      }
+    );
+
+    console.log('✅ RESPUESTA EXITOSA DEL BACKEND:', response.data);
+
+    Alert.alert(
+      '¡Cita Agendada! 🎉',
+      `Tu cita para ${selectedServicio.NombreServicio} ha sido agendada para el ${selectedDate.format('DD/MM/YYYY')} a las ${selectedTime} con ${selectedTecnico.Nombre}`,
+      [{ 
+        text: 'OK', 
+        onPress: () => navigation.navigate('Home')
+      }]
+    );
+
+  } catch (error) {
+    console.error('❌ ERROR COMPLETO AL AGENDAR CITA:');
+    
+    if (error.response) {
+      console.error('🔴 RESPONSE ERROR:');
+      console.error('Status:', error.response.status);
+      console.error('Data:', error.response.data);
+      console.error('Payload sent:', error.response.config?.data);
+      
+      let mensajeError = 'Ocurrió un error al agendar la cita.';
+      
+      if (error.response.data) {
+        if (error.response.data.detail) {
+          mensajeError = `Error: ${error.response.data.detail}`;
+        } else if (error.response.data.message) {
+          mensajeError = `Error: ${error.response.data.message}`;
+        }
+      }
+      
+      Alert.alert('Error del Servidor', mensajeError);
+      
+    } else if (error.request) {
+      console.error('🟡 REQUEST ERROR (no response):', error.request);
+      Alert.alert('Error de Conexión', 'No se pudo conectar con el servidor.');
+    } else {
+      console.error('🟠 CONFIG ERROR:', error.message);
+      Alert.alert('Error', error.message || 'Error de configuración');
+    }
+  } finally {
+    setLoading(false);
+  }
+};
+
+// Agrega esta función después de cargarDatosIniciales
+const probarConexionBackend = async () => {
+  try {
+    console.log('🧪 Probando conexión con el backend...');
+    
+    // Probar endpoint de clientes
+    const testClientes = await axios.get(`${API_BASE_URL}/clientes`);
+    console.log('✅ Clientes endpoint funciona:', testClientes.data.length, 'clientes encontrados');
+    
+    // Probar endpoint de citas (GET)
+    const testCitas = await axios.get(`${API_BASE_URL}/citas`);
+    console.log('✅ Citas endpoint funciona:', testCitas.data.length, 'citas encontradas');
+    
+    return true;
+  } catch (error) {
+    console.error('❌ Error en prueba de conexión:', error.message);
+    return false;
+  }
+};
+
+// Llama a esta función en tu useEffect o en un botón de prueba
 
   const generateCalendarDays = () => {
     const startOfMonth = currentMonth.clone().startOf('month');
@@ -173,18 +371,60 @@ export default function DateScreen() {
   const goToPreviousMonth = () => setCurrentMonth(currentMonth.clone().subtract(1, 'month'));
   const goToNextMonth = () => setCurrentMonth(currentMonth.clone().add(1, 'month'));
 
+  if (loadingData) {
+    return (
+      <View style={[styles.container, themeStyles.container, styles.loadingContainer]}>
+        <ActivityIndicator size="large" color="#0A2A66" />
+        <Text style={[styles.loadingText, themeStyles.text]}>Cargando datos del negocio...</Text>
+      </View>
+    );
+  }
+
+  if (!clienteActual || !usuarioActual) {
+    return (
+      <View style={[styles.container, themeStyles.container, styles.loadingContainer]}>
+        <Ionicons name="alert-circle" size={48} color="#EF4444" />
+        <Text style={[styles.loadingText, themeStyles.text]}>
+          {!usuarioActual ? 'Debes iniciar sesión para agendar citas' : 'No se pudo cargar la información del cliente'}
+        </Text>
+        <TouchableOpacity 
+          style={styles.confirmButton}
+          onPress={() => navigation.navigate('Login')}
+        >
+          <Text style={styles.confirmButtonText}>Ir a Login</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
   return (
+    
     <View style={[styles.container, themeStyles.container]}>
       {/* Header Profesional */}
       <View style={[styles.header, themeStyles.card]}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
           <Ionicons name="arrow-back" size={24} color={themeStyles.text.color} />
         </TouchableOpacity>
+        
         <Text style={[styles.headerTitle, themeStyles.text]}>Agendar Cita</Text>
         <View style={styles.headerPlaceholder} />
       </View>
 
       <ScrollView style={styles.scrollContainer} contentContainerStyle={styles.contentContainer}>
+        {/* Información del Cliente Autenticado */}
+        <View style={[styles.section, themeStyles.card]}>
+          <View style={styles.sectionHeader}>
+            <Ionicons name="person" size={20} color="#0A2A66" />
+            <Text style={[styles.sectionTitle, themeStyles.text]}>Cliente</Text>
+          </View>
+          <View style={[styles.servicioInfo, { backgroundColor: isDarkMode ? '#2D3748' : '#F8FAFF' }]}>
+            <Text style={[styles.servicioTexto, themeStyles.text]}>{usuarioActual.Nombre}</Text>
+            <Text style={[styles.servicioTiempo, themeStyles.textSecondary]}>
+              <Ionicons name="mail" size={14} color="#64748B" /> {usuarioActual.Email}
+            </Text>
+          </View>
+        </View>
+
         {/* Información de la Empresa */}
         <View style={[styles.empresaCard, themeStyles.card]}>
           <View style={styles.empresaHeader}>
@@ -198,55 +438,110 @@ export default function DateScreen() {
           </View>
         </View>
 
+        {/* Selección de Servicio */}
+        <View style={[styles.section, themeStyles.card]}>
+          <View style={styles.sectionHeader}>
+            <Ionicons name="construct" size={20} color="#0A2A66" />
+            <Text style={[styles.sectionTitle, themeStyles.text]}>Servicio</Text>
+          </View>
+          <TouchableOpacity
+            style={[styles.serviceSelector, themeStyles.input]}
+            onPress={() => setShowServiciosModal(true)}
+          >
+            <Ionicons name="list" size={20} color="#64748B" />
+            <Text style={[styles.serviceSelectorText, themeStyles.text]}>
+              {selectedServicio ? selectedServicio.NombreServicio : 'Seleccionar servicio'}
+            </Text>
+            <Ionicons name="chevron-down" size={16} color="#64748B" />
+          </TouchableOpacity>
+
+          {/* Modal de Servicios */}
+          <Modal visible={showServiciosModal} animationType="slide" transparent={true}>
+            <View style={styles.modalOverlay}>
+              <View style={[styles.modalContent, themeStyles.card]}>
+                <View style={styles.modalHeader}>
+                  <Text style={[styles.modalTitle, themeStyles.text]}>Selecciona un servicio</Text>
+                </View>
+                <FlatList
+                  data={servicios}
+                  keyExtractor={(item) => item.IdServicio.toString()}
+                  renderItem={({ item }) => (
+                    <TouchableOpacity
+                      style={[
+                        styles.serviceItem,
+                        selectedServicio?.IdServicio === item.IdServicio && styles.serviceItemSelected,
+                      ]}
+                      onPress={() => {
+                        setSelectedServicio(item);
+                        setShowServiciosModal(false);
+                      }}
+                    >
+                      <View style={styles.serviceInfo}>
+                        <Text style={[styles.serviceName, themeStyles.text]}>
+                          {item.NombreServicio}
+                        </Text>
+                        <Text style={[styles.serviceDetails, themeStyles.textSecondary]}>
+                          ${item.Precio} • {item.DuracionMinutos} min
+                        </Text>
+                        {item.Descripcion && (
+                          <Text style={[styles.serviceDescription, themeStyles.textSecondary]}>
+                            {item.Descripcion}
+                          </Text>
+                        )}
+                      </View>
+                    </TouchableOpacity>
+                  )}
+                />
+                <TouchableOpacity
+                  style={styles.closeModalButton}
+                  onPress={() => setShowServiciosModal(false)}
+                >
+                  <Text style={styles.closeModalText}>Cerrar</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </Modal>
+        </View>
+
         {/* Selección de Técnico */}
         <View style={[styles.section, themeStyles.card]}>
           <View style={styles.sectionHeader}>
             <Ionicons name="people" size={20} color="#0A2A66" />
-            <Text style={[styles.sectionTitle, themeStyles.text]}>Técnico que te atenderá</Text>
+            <Text style={[styles.sectionTitle, themeStyles.text]}>Técnico</Text>
           </View>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tecnicosContainer}>
             {tecnicos.map((tecnico) => (
               <TouchableOpacity
-                key={tecnico.id}
+                key={tecnico.IdPersonal}
                 style={[
                   styles.tecnicoButton,
-                  selectedTecnico === tecnico.nombre && styles.tecnicoButtonSelected,
+                  selectedTecnico?.IdPersonal === tecnico.IdPersonal && styles.tecnicoButtonSelected,
                 ]}
-                onPress={() => setSelectedTecnico(tecnico.nombre)}
+                onPress={() => setSelectedTecnico(tecnico)}
               >
                 <Ionicons 
                   name="person-circle" 
                   size={20} 
-                  color={selectedTecnico === tecnico.nombre ? "#FFFFFF" : "#0A2A66"} 
+                  color={selectedTecnico?.IdPersonal === tecnico.IdPersonal ? "#FFFFFF" : "#0A2A66"} 
                 />
                 <Text style={[
                   styles.tecnicoText,
-                  selectedTecnico === tecnico.nombre && styles.tecnicoTextSelected,
+                  selectedTecnico?.IdPersonal === tecnico.IdPersonal && styles.tecnicoTextSelected,
                 ]}>
-                  {tecnico.nombre}
+                  {tecnico.Nombre}
+                </Text>
+                <Text style={[
+                  styles.tecnicoRol,
+                  selectedTecnico?.IdPersonal === tecnico.IdPersonal && styles.tecnicoRolSelected,
+                ]}>
+                  {tecnico.RolEnNegocio}
                 </Text>
               </TouchableOpacity>
             ))}
           </ScrollView>
         </View>
 
-        {/* Información del Servicio */}
-        <View style={[styles.section, themeStyles.card]}>
-          <View style={styles.sectionHeader}>
-            <Ionicons name="construct" size={20} color="#0A2A66" />
-            <Text style={[styles.sectionTitle, themeStyles.text]}>Servicio a realizar</Text>
-          </View>
-          <View style={[styles.servicioInfo, { backgroundColor: isDarkMode ? '#2D3748' : '#F8FAFF' }]}>
-            <Text style={[styles.servicioTexto, themeStyles.text]}>Consulta y asesoramiento profesional</Text>
-            <View style={styles.servicioMeta}>
-              <Text style={[styles.servicioTiempo, themeStyles.textSecondary]}>
-                <Ionicons name="time" size={14} color="#64748B" /> 15 min aprox.
-              </Text>
-            </View>
-          </View>
-        </View>
-
-        {/* Selector de Fecha */}
+        {/* Selector de Fecha - CALENDARIO */}
         <View style={[styles.section, themeStyles.card]}>
           <View style={styles.sectionHeader}>
             <Ionicons name="calendar" size={20} color="#0A2A66" />
@@ -441,17 +736,19 @@ export default function DateScreen() {
         <TouchableOpacity
           style={[
             styles.confirmButton,
-            (!selectedTecnico || !selectedDate || !selectedTime) && styles.confirmButtonDisabled,
+            (!selectedTecnico || !selectedDate || !selectedTime || !selectedServicio) && styles.confirmButtonDisabled,
           ]}
           onPress={confirmarCita}
-          disabled={!selectedTecnico || !selectedDate || !selectedTime || loading}
+          disabled={!selectedTecnico || !selectedDate || !selectedTime || !selectedServicio || loading}
         >
           {loading ? (
             <ActivityIndicator size="small" color="#FFFFFF" />
           ) : (
             <>
               <Ionicons name="checkmark-circle" size={20} color="#FFFFFF" />
-              <Text style={styles.confirmButtonText}>Confirmar Cita</Text>
+              <Text style={styles.confirmButtonText}>
+                {selectedServicio ? `Confirmar Cita - $${selectedServicio.Precio}` : 'Confirmar Cita'}
+              </Text>
             </>
           )}
         </TouchableOpacity>

@@ -12,6 +12,8 @@ import {
   ScrollView,
   Alert,
 } from "react-native";
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 
 export default function LoginScreen({ navigation }) {
   const [username, setUsername] = useState("");
@@ -19,45 +21,78 @@ export default function LoginScreen({ navigation }) {
   const [loading, setLoading] = useState(false);
 
   // 🔐 Función para iniciar sesión con el backend real
-  const handleLogin = async () => {
-    if (!username || !password) {
-      Alert.alert("Campos requeridos", "Por favor ingresa tu correo y contraseña");
-      return;
+  // En tu LoginScreen.js - actualiza el handleLogin
+// En tu LoginScreen.js - actualiza el handleLogin
+const handleLogin = async () => {
+  if (!username || !password) {
+    Alert.alert("Campos requeridos", "Por favor ingresa tu correo y contraseña");
+    return;
+  }
+
+  setLoading(true);
+
+  try {
+    const response = await fetch("https://nearbizbackend3.vercel.app/api/auth/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        userOrEmail: username,
+        password: password,
+      }),
+    });
+
+    if (!response.ok) {
+      const message = await response.text();
+      throw new Error(message || "Usuario o contraseña incorrectos");
     }
 
-    setLoading(true);
+    const data = await response.json();
+    console.log('Respuesta completa del servidor:', data);
 
-    try {
+    // ✅ MANEJO SEGURO DE ASYNCSTORAGE - Verificar que los datos existen
+    if (data.token) {
+      await AsyncStorage.setItem('userToken', data.token);
+      console.log('Token guardado:', data.token);
+    } else {
+      console.warn('No se recibió token en la respuesta');
+    }
 
-      // ⚠️ CAMBIA la IP/puerto por la de tu backend si usas otra
-      const response = await fetch("https://nearbizbackend3.vercel.app/api/auth/login", {
-
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          userOrEmail: username,
-          password: password,
-        }),
-      });
-
-      if (!response.ok) {
-        const message = await response.text();
-        throw new Error(message || "Usuario o contraseña incorrectos");
+    if (data.user) {
+      await AsyncStorage.setItem('userData', JSON.stringify(data.user));
+      console.log('Usuario guardado:', data.user);
+    } else {
+      // Si no viene user, pero viene otro campo con la información del usuario
+      // Buscar cualquier campo que pueda contener la información del usuario
+      const userData = data.usuario || data.userData || data;
+      if (userData && userData.IdUsuario) {
+        await AsyncStorage.setItem('userData', JSON.stringify(userData));
+        console.log('Usuario guardado (formato alternativo):', userData);
+      } else {
+        throw new Error('No se recibió información del usuario en la respuesta');
       }
-
-      const data = await response.json();
-
-      navigation.navigate("Home");
-
-    } catch (error) {
-      Alert.alert("Error", error.message || "Usuario o contraseña incorrectos");
-    } finally {
-      setLoading(false);
     }
-  };
 
+    // Verificar que los datos se guardaron correctamente
+    const savedToken = await AsyncStorage.getItem('userToken');
+    const savedUser = await AsyncStorage.getItem('userData');
+    
+    console.log('Token guardado en AsyncStorage:', savedToken);
+    console.log('Usuario guardado en AsyncStorage:', savedUser);
+    
+    navigation.navigate("Home");
+
+  } catch (error) {
+    console.error('Error completo en login:', error);
+    Alert.alert(
+      "Error", 
+      error.message || "Usuario o contraseña incorrectos"
+    );
+  } finally {
+    setLoading(false);
+  }
+};
   // Nueva función para registrarse
   const handleRegister = () => {
     navigation.navigate("RegisterScreen");

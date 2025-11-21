@@ -52,12 +52,15 @@ const handleLogin = async () => {
     console.log('Respuesta completa del servidor:', data);
 
     // ✅ MANEJO SEGURO DE ASYNCSTORAGE - Verificar que los datos existen
-    if (data.token) {
-      await AsyncStorage.setItem('userToken', data.token);
-      console.log('Token guardado:', data.token);
-    } else {
-      console.warn('No se recibió token en la respuesta');
-    }
+ const userToken = data.token || data.Token || data.user?.Token || data.usuario?.Token;
+if (userToken) {
+  await AsyncStorage.setItem('userToken', userToken);
+  console.log('Token guardado:', userToken);
+} else {
+  console.warn('No se recibió token en la respuesta');
+}
+
+
 
     if (data.user) {
       await AsyncStorage.setItem('userData', JSON.stringify(data.user));

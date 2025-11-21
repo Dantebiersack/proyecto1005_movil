@@ -22,6 +22,7 @@ export default function Header({ isDarkMode, setIsDarkMode, themeStyles,onPressN
         style={styles.themeButton}
         onPress={() => setIsDarkMode(!isDarkMode)}
       >
+        
         <Ionicons
           name={isDarkMode ? "moon" : "sunny"}
           size={22}

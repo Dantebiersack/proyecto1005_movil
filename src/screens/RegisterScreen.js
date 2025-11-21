@@ -49,7 +49,7 @@ export default function RegisterScreen({ navigation }) {
         Token: null
       });
 
-      const response = await fetch("https://nearbizbackend3.vercel.app/api/usuarios", {
+      const response = await fetch("https://nearbizbackend3.vercel.app/api/registroapp", {
         method: "POST",
         headers: { 
           "Content-Type": "application/json",

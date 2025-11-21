@@ -1,179 +1,164 @@
-import * as React from 'react';
-import { StyleSheet, View, Text, TouchableOpacity } from 'react-native';
-import MapView, { Marker, Polyline } from 'react-native-maps';
-import * as Location from 'expo-location';
-import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
+import React, { useEffect, useState } from "react";
+import { View, Text, StyleSheet, TouchableOpacity, Alert } from "react-native";
+import Mapbox from "@rnmapbox/maps";
+import * as Location from "expo-location";
+import FontAwesome5 from "react-native-vector-icons/FontAwesome5";
+
+// ⬅ Asegúrate de poner aquí tu token de Mapbox
+Mapbox.setAccessToken(
+  "pk.eyJ1IjoibGluay1taW5pc2gtMDMxMiIsImEiOiJjbWdpbmE4YWMwYjBrMmtvaW1ja2tmbzM5In0.5jHjask85M6t795e1D808g"
+);
 
 export default function MapboxMap({ route }) {
-  const { empresa, userLocation } = route.params;
+  const { empresa } = route.params;
 
-  const [region, setRegion] = React.useState(null);
-  const [currentUserLocation, setCurrentUserLocation] = React.useState(null);
-  const [errorMsg, setErrorMsg] = React.useState(null);
-  const [distance, setDistance] = React.useState(null);
-  const [duration, setDuration] = React.useState(null);
-  const [routeCoords, setRouteCoords] = React.useState([]);
-  const [travelMode, setTravelMode] = React.useState('driving');
+  const [currentUserLocation, setCurrentUserLocation] = useState(null);
+  const [routeCoords, setRouteCoords] = useState([]);
+  const [travelMode, setTravelMode] = useState("driving");
+  const [distance, setDistance] = useState(null);
+  const [duration, setDuration] = useState(null);
 
-  const MAPBOX_TOKEN =
-    'pk.eyJ1IjoibGluay1taW5pc2gtMDMxMiIsImEiOiJjbWdpbmE4YWMwYjBrMmtvaW1ja2tmbzM5In0.5jHjask85M6t795e1D808g';
-
-  // Obtener ruta desde Mapbox Directions API
-  const fetchRouteFromMapbox = async (start, end, mode = 'driving') => {
+  // ===========================================
+  // 🧭 FUNCION PARA OBTENER RUTA DESDE MAPBOX
+  // ===========================================
+  const fetchRouteFromMapbox = async (start, end, mode = "driving") => {
     try {
-      const url = `https://api.mapbox.com/directions/v5/mapbox/${mode}/${start.longitude},${start.latitude};${end.longitude},${end.latitude}?geometries=geojson&overview=full&access_token=${MAPBOX_TOKEN}`;
+      const url = `https://api.mapbox.com/directions/v5/mapbox/${mode}/${start.longitude},${start.latitude};${end.longitude},${end.latitude}?geometries=geojson&overview=full&access_token=${Mapbox.getAccessToken()}`;
 
       const response = await fetch(url);
       const data = await response.json();
 
-      if (data.routes && data.routes.length > 0) {
-        const route = data.routes[0];
-        const coords = route.geometry.coordinates.map(([lng, lat]) => ({
-          latitude: lat,
-          longitude: lng,
-        }));
-
-        setRouteCoords(coords);
-        setDistance((route.distance / 1000).toFixed(2)); // km
-        setDuration((route.duration / 60).toFixed(1)); // min
-      } else {
-        console.warn('No se encontró ruta');
-        setRouteCoords([]);
+      if (!data.routes || data.routes.length === 0) {
+        console.log("❌ NO SE ENCONTRÓ RUTA", data);
+        return;
       }
-    } catch (error) {
-      console.error('Error fetching route:', error);
+
+      const route = data.routes[0];
+
+      setRouteCoords(route.geometry.coordinates);
+      setDistance((route.distance / 1000).toFixed(2)); // km
+      setDuration((route.duration / 60).toFixed(1)); // min
+    } catch (e) {
+      console.log("Error fetching route:", e);
+      Alert.alert("Error", "No se pudo generar la ruta.");
     }
   };
 
-  // Obtener ubicación actual
-  React.useEffect(() => {
+  // ===========================================
+  // 📍 OBTENER UBICACIÓN DEL USUARIO
+  // ===========================================
+  useEffect(() => {
     (async () => {
-      try {
-        let { status } = await Location.requestForegroundPermissionsAsync();
-        if (status !== 'granted') {
-          setErrorMsg('Permiso de ubicación denegado.');
-
-          if (userLocation) {
-            setCurrentUserLocation(userLocation);
-            calculateMapRegion(userLocation, empresa);
-          }
-          return;
-        }
-
-        let location = await Location.getCurrentPositionAsync({});
-        const coords = {
-          latitude: location.coords.latitude,
-          longitude: location.coords.longitude,
-        };
-
-        setCurrentUserLocation(coords);
-        calculateMapRegion(coords, empresa);
-
-        if (empresa) {
-          fetchRouteFromMapbox(
-            coords,
-            {
-              latitude: empresa.CoordenadasLat,
-              longitude: empresa.CoordenadasLng,
-            },
-            travelMode
-          );
-        }
-      } catch (error) {
-        console.error('Error getting location:', error);
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") {
+        alert("Permiso de ubicación denegado");
+        return;
       }
+
+      const loc = await Location.getCurrentPositionAsync();
+
+      const coords = {
+        latitude: loc.coords.latitude,
+        longitude: loc.coords.longitude,
+      };
+
+      setCurrentUserLocation(coords);
+
+      // Llamar ruta
+      fetchRouteFromMapbox(
+        coords,
+        {
+          latitude: Number(empresa.CoordenadasLat),
+          longitude: Number(empresa.CoordenadasLng),
+        },
+        travelMode
+      );
     })();
   }, []);
 
-  // Cuando cambia el modo de transporte
-  React.useEffect(() => {
-    if (currentUserLocation && empresa) {
+  // ===========================================
+  // 🚴 CAMBIO DE MODO DE TRANSPORTE
+  // ===========================================
+  useEffect(() => {
+    if (currentUserLocation) {
       fetchRouteFromMapbox(
         currentUserLocation,
         {
-          latitude: empresa.CoordenadasLat,
-          longitude: empresa.CoordenadasLng,
+          latitude: Number(empresa.CoordenadasLat),
+          longitude: Number(empresa.CoordenadasLng),
         },
         travelMode
       );
     }
   }, [travelMode]);
 
-  // Calcula el área visible
-  const calculateMapRegion = (userCoords, business) => {
-    if (!userCoords || !business) return;
-
-    const midLat = (userCoords.latitude + business.CoordenadasLat) / 2;
-    const midLng = (userCoords.longitude + business.CoordenadasLng) / 2;
-
-    const latDelta =
-      Math.abs(userCoords.latitude - business.CoordenadasLat) * 1.5 + 0.01;
-    const lngDelta =
-      Math.abs(userCoords.longitude - business.CoordenadasLng) * 1.5 + 0.01;
-
-    setRegion({
-      latitude: midLat,
-      longitude: midLng,
-      latitudeDelta: Math.max(latDelta, 0.05),
-      longitudeDelta: Math.max(lngDelta, 0.05),
-    });
-  };
-
-  if (errorMsg && !userLocation) {
-    return (
-      <View style={styles.center}>
-        <Text>{errorMsg}</Text>
-      </View>
-    );
-  }
-
-  if (!region && !errorMsg) {
-    return (
-      <View style={styles.center}>
-        <Text>Obteniendo tu ubicación...</Text>
-      </View>
-    );
-  }
-
   return (
     <View style={{ flex: 1 }}>
-      <MapView
+      {/* MAPA */}
+      <Mapbox.MapView
         style={styles.map}
-        initialRegion={region}
-        region={region}
-        showsUserLocation={false}
-        onRegionChangeComplete={setRegion}
+        styleURL={Mapbox.StyleURL.Street}
       >
-        {/* 📍 Marcador del usuario */}
+        {/* Cámara posicionada en el usuario */}
         {currentUserLocation && (
-          <Marker coordinate={currentUserLocation}>
-            <FontAwesome5 name="map-marker-alt" size={32} color="#007AFF" />
-          </Marker>
-        )}
-
-        {/* 📍 Marcador de la empresa */}
-        {empresa && (
-          <Marker
-            coordinate={{
-              latitude: empresa.CoordenadasLat,
-              longitude: empresa.CoordenadasLng,
-            }}
-          >
-            <FontAwesome5 name="map-marker-alt" size={32} color="#FF3B30" />
-          </Marker>
-        )}
-
-        {/* Ruta */}
-        {routeCoords.length > 0 && (
-          <Polyline
-            coordinates={routeCoords}
-            strokeColor="#007AFF"
-            strokeWidth={4}
+          <Mapbox.Camera
+            zoomLevel={13}
+            centerCoordinate={[
+              currentUserLocation.longitude,
+              currentUserLocation.latitude,
+            ]}
           />
         )}
-      </MapView>
 
-      {/* Tarjeta inferior */}
+        {/* 🟦 Marcador del usuario */}
+        {currentUserLocation && (
+          <Mapbox.PointAnnotation
+            id="user"
+            coordinate={[
+              currentUserLocation.longitude,
+              currentUserLocation.latitude,
+            ]}
+          >
+            <FontAwesome5 name="map-marker-alt" size={30} color="#007AFF" />
+          </Mapbox.PointAnnotation>
+        )}
+
+        {/* 🔴 Marcador de empresa */}
+        <Mapbox.PointAnnotation
+          id="empresa"
+          coordinate={[
+            Number(empresa.CoordenadasLng),
+            Number(empresa.CoordenadasLat),
+          ]}
+        >
+          <FontAwesome5 name="map-marker-alt" size={30} color="#FF3B30" />
+        </Mapbox.PointAnnotation>
+
+        {/* 🛣️ Línea de ruta */}
+        {routeCoords.length > 0 && (
+          <Mapbox.ShapeSource
+            id="routeSource"
+            shape={{
+              type: "Feature",
+              geometry: {
+                type: "LineString",
+                coordinates: routeCoords,
+              },
+            }}
+          >
+            <Mapbox.LineLayer
+              id="routeLine"
+              style={{
+                lineWidth: 4,
+                lineJoin: "round",
+                lineColor: "#007AFF",
+              }}
+            />
+          </Mapbox.ShapeSource>
+        )}
+      </Mapbox.MapView>
+
+      {/* PANEL INFERIOR */}
       <View style={styles.bottomInfoCard}>
         <Text style={styles.businessName}>{empresa.Nombre}</Text>
         <Text style={styles.businessAddress}>{empresa.Direccion}</Text>
@@ -182,52 +167,31 @@ export default function MapboxMap({ route }) {
         <Text style={styles.distanceText}>
           {distance && duration
             ? `Distancia: ${distance} km | Tiempo: ${duration} min`
-            : 'Calculando ruta...'}
+            : "Calculando ruta..."}
         </Text>
 
         {/* Selector de modo */}
         <View style={styles.modeSelector}>
-          <TouchableOpacity
-            style={[
-              styles.modeButton,
-              travelMode === 'driving' && styles.modeSelected,
-            ]}
-            onPress={() => setTravelMode('driving')}
-          >
-            <FontAwesome5
-              name="car"
-              size={20}
-              color={travelMode === 'driving' ? 'white' : 'black'}
-            />
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[
-              styles.modeButton,
-              travelMode === 'walking' && styles.modeSelected,
-            ]}
-            onPress={() => setTravelMode('walking')}
-          >
-            <FontAwesome5
-              name="walking"
-              size={20}
-              color={travelMode === 'walking' ? 'white' : 'black'}
-            />
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[
-              styles.modeButton,
-              travelMode === 'cycling' && styles.modeSelected,
-            ]}
-            onPress={() => setTravelMode('cycling')}
-          >
-            <FontAwesome5
-              name="bicycle"
-              size={20}
-              color={travelMode === 'cycling' ? 'white' : 'black'}
-            />
-          </TouchableOpacity>
+          {[
+            { id: "driving", icon: "car" },
+            { id: "walking", icon: "walking" },
+            { id: "cycling", icon: "bicycle" },
+          ].map((m) => (
+            <TouchableOpacity
+              key={m.id}
+              style={[
+                styles.modeButton,
+                travelMode === m.id && styles.modeSelected,
+              ]}
+              onPress={() => setTravelMode(m.id)}
+            >
+              <FontAwesome5
+                name={m.icon}
+                size={18}
+                color={travelMode === m.id ? "white" : "black"}
+              />
+            </TouchableOpacity>
+          ))}
         </View>
       </View>
     </View>
@@ -236,55 +200,42 @@ export default function MapboxMap({ route }) {
 
 const styles = StyleSheet.create({
   map: { flex: 1 },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
 
   bottomInfoCard: {
-    position: 'absolute',
+    position: "absolute",
     bottom: 20,
     left: 10,
     right: 10,
-    backgroundColor: 'white',
+    backgroundColor: "white",
     borderRadius: 12,
     padding: 15,
-    shadowColor: '#000',
-    shadowOpacity: 0.25,
-    shadowRadius: 3.5,
     elevation: 5,
   },
 
-  businessName: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#333',
-  },
-  businessAddress: {
-    fontSize: 14,
-    color: '#555',
-    marginBottom: 3,
-  },
-  businessPhone: {
-    fontSize: 14,
-    color: '#007AFF',
-    marginBottom: 8,
-  },
+  businessName: { fontSize: 18, fontWeight: "700" },
+  businessAddress: { fontSize: 14, color: "#555" },
+  businessPhone: { fontSize: 14, color: "#007AFF" },
+
   distanceText: {
     fontSize: 15,
-    fontWeight: '600',
-    color: '#007AFF',
+    fontWeight: "600",
+    color: "#007AFF",
     marginBottom: 8,
   },
 
   modeSelector: {
-    flexDirection: 'row',
-    justifyContent: 'center',
+    flexDirection: "row",
+    justifyContent: "center",
     gap: 10,
   },
+
   modeButton: {
-    backgroundColor: '#eee',
+    backgroundColor: "#eee",
     padding: 10,
     borderRadius: 50,
   },
+
   modeSelected: {
-    backgroundColor: '#007AFF',
+    backgroundColor: "#007AFF",
   },
 });

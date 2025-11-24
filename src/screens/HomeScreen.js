@@ -7,12 +7,12 @@ import {
   ActivityIndicator, 
   Alert,
   Image,
-  TouchableOpacity 
+  TouchableOpacity,
+  RefreshControl 
 } from "react-native";
 import Header from "../components/Header";
 import Categories from "../components/Categories";
 import SearchFilters from "../components/SearchFilters";
-import BusinessCard from "../components/BusinessCard";
 import LocationStatus from "../components/LocationStatus";
 import * as Location from 'expo-location';
 import { Ionicons } from '@expo/vector-icons';
@@ -31,12 +31,13 @@ export default function HomeScreen({ navigation }) {
   const [empresas, setEmpresas] = useState([]);
   const [categorias, setCategorias] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   // Ubicación
   const [userLocation, setUserLocation] = useState(null);
   const [locationError, setLocationError] = useState(null);
 
-  // ⭐ Valoraciones
+  // Valoraciones
   const [valoraciones, setValoraciones] = useState([]);
 
   // Map categorías
@@ -56,84 +57,99 @@ export default function HomeScreen({ navigation }) {
 
   // Función distancia (Haversine)
   const calculateDistance = (lat1, lon1, lat2, lon2) => {
-    const R = 6371;
-    const toRad = (x) => (x * Math.PI) / 180;
-    const dLat = toRad(lat2 - lat1);
-    const dLon = toRad(lon2 - lon1);
+    if (!lat1 || !lon1 || !lat2 || !lon2) return 0;
+    
+    try {
+      const R = 6371;
+      const toRad = (x) => (x * Math.PI) / 180;
+      const dLat = toRad(lat2 - lat1);
+      const dLon = toRad(lon2 - lon1);
 
-    const a =
-      Math.sin(dLat / 2) ** 2 +
-      Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      const a =
+        Math.sin(dLat / 2) ** 2 +
+        Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
-    return R * c;
+      return R * c;
+    } catch (error) {
+      console.error('Error calculando distancia:', error);
+      return 0;
+    }
   };
 
   // Obtener ubicación del usuario
-  useEffect(() => {
-    const getLocation = async () => {
-      try {
-        let { status } = await Location.requestForegroundPermissionsAsync();
+  const getLocation = async () => {
+    try {
+      let { status } = await Location.requestForegroundPermissionsAsync();
 
-        if (status !== "granted") {
-          setLocationError("Permiso de ubicación denegado");
-          return;
-        }
-
-        let location = await Location.getCurrentPositionAsync({
-          accuracy: Location.Accuracy.Balanced,
-        });
-
-        setUserLocation({
-          latitude: location.coords.latitude,
-          longitude: location.coords.longitude,
-        });
-
-        setLocationError(null);
-      } catch (error) {
-        console.error("Error getting location:", error);
-        setLocationError("Error obteniendo la ubicación");
-
-        // León Gto default
-        setUserLocation({
-          latitude: 21.121017,
-          longitude: -101.682254,
-        });
+      if (status !== "granted") {
+        setLocationError("Permiso de ubicación denegado");
+        return;
       }
-    };
 
+      let location = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.Balanced,
+      });
+
+      setUserLocation({
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude,
+      });
+
+      setLocationError(null);
+    } catch (error) {
+      console.error("Error getting location:", error);
+      setLocationError("Error obteniendo la ubicación");
+
+      // León Gto default
+      setUserLocation({
+        latitude: 21.121017,
+        longitude: -101.682254,
+      });
+    }
+  };
+
+  useEffect(() => {
     getLocation();
   }, []);
 
   // Obtener negocios
-  useEffect(() => {
-    const fetchNegocios = async () => {
-      try {
-        setLoading(true);
+  const fetchNegocios = async () => {
+    try {
+      setLoading(true);
+      console.log('🔍 Iniciando fetch de negocios...');
 
-        const apiUrl = "https://nearbizbackend3.vercel.app/api/Negocios";
-        const response = await fetch(apiUrl);
+      const apiUrl = "https://nearbizbackend3.vercel.app/api/Negocios";
+      const response = await fetch(apiUrl);
 
-        if (!response.ok) throw new Error(`Error: ${response.status}`);
-
-        const data = await response.json();
-        setEmpresas(data);
-
-        // Categorías únicas
-        const catsUnicas = [...new Set(data.map((item) => item.IdCategoria))];
-        setCategorias(catsUnicas);
-      } catch (error) {
-        console.error("Error fetching data:", error);
-        Alert.alert("Error", "No se pudieron cargar los negocios.");
-      } finally {
-        setLoading(false);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
-    };
 
+      const data = await response.json();
+      console.log('✅ Negocios recibidos:', data.length);
+      console.log('📊 Primer negocio:', data[0]);
+      
+      setEmpresas(data);
+
+      // Categorías únicas
+      const catsUnicas = [...new Set(data.map((item) => item.IdCategoria))];
+      setCategorias(catsUnicas);
+      
+    } catch (error) {
+      console.error("❌ Error fetching data:", error);
+      Alert.alert("Error", "No se pudieron cargar los negocios: " + error.message);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
     fetchNegocios();
   }, []);
 
-  // ⭐ Obtener valoraciones
+  // Obtener valoraciones
   useEffect(() => {
     const fetchValoraciones = async () => {
       try {
@@ -149,7 +165,7 @@ export default function HomeScreen({ navigation }) {
     fetchValoraciones();
   }, []);
 
-  // ⭐ Calcular promedio por negocio
+  // Calcular promedio por negocio
   const getPromedio = (idNegocio) => {
     const vals = valoraciones.filter((v) => v.IdNegocio === idNegocio);
     if (vals.length === 0) return 0;
@@ -158,29 +174,25 @@ export default function HomeScreen({ navigation }) {
     return suma / vals.length;
   };
 
-  // Parsear horario - MEJORADO para manejar strings JSON escapados
+  // Parsear horario
   const parseHorario = (horarioString) => {
     try {
-      // Si ya es un objeto, devolverlo directamente
+      if (!horarioString) return [];
+      
       if (typeof horarioString === 'object' && horarioString !== null) {
         return horarioString;
       }
       
-      // Si es string, intentar parsear
       if (typeof horarioString === 'string') {
         const cleanedString = horarioString.trim();
         
-        // Si parece ser JSON (empieza con [ o {), intentar parsearlo
         if (cleanedString.startsWith('[') || cleanedString.startsWith('{')) {
-          // Intentar parsear directamente
           try {
             return JSON.parse(cleanedString);
           } catch (firstError) {
-            // Si falla, puede ser porque tiene comillas escapadas
-            // Intentar limpiar el string y parsear nuevamente
             const unescapedString = cleanedString
-              .replace(/\\"/g, '"') // Reemplazar \" por "
-              .replace(/^"+|"+$/g, ''); // Remover comillas al inicio y final si las hay
+              .replace(/\\"/g, '"')
+              .replace(/^"+|"+$/g, '');
             
             try {
               return JSON.parse(unescapedString);
@@ -190,213 +202,111 @@ export default function HomeScreen({ navigation }) {
             }
           }
         }
-        
-        // Si empieza con letras (formato de texto como "L-S 10:00-19:00")
-        if (/^[A-Za-z]/.test(cleanedString)) {
-          return convertirHorarioTextoAJSON(cleanedString);
-        }
       }
       
-      // Para cualquier otro caso, devolver array vacío
       return [];
     } catch (error) {
-      console.error("Error parsing horario:", error, "Horario string:", horarioString);
+      console.error("Error parsing horario:", error);
       return [];
     }
-  };
-
-  // Función para convertir formato de texto a JSON (para horarios en formato texto)
-  const convertirHorarioTextoAJSON = (horarioString) => {
-    if (!horarioString || typeof horarioString !== 'string') {
-      return [];
-    }
-
-    const texto = horarioString.trim().toUpperCase();
-    
-    // Mapeo de días
-    const diasMap = {
-      'L': 'Lunes',
-      'M': 'Martes', 
-      'MI': 'Miércoles',
-      'J': 'Jueves',
-      'V': 'Viernes',
-      'S': 'Sábado',
-      'D': 'Domingo'
-    };
-
-    // Patrones comunes
-    const patrones = [
-      // Formato: "L-S 10:00-19:00" o "L-D 10:00-20:00"
-      /^([A-Z]+)-([A-Z]+)\s+(\d{1,2}:\d{2})-(\d{1,2}:\d{2})$/,
-      // Formato: "L-S 10:00 a 9:00" 
-      /^([A-Z]+)-([A-Z]+)\s+(\d{1,2}:\d{2})\s+a\s+(\d{1,2}:\d{2})$/
-    ];
-
-    for (const patron of patrones) {
-      const match = texto.match(patron);
-      if (match) {
-        const diaInicio = match[1];
-        const diaFin = match[2];
-        const horaInicio = match[3];
-        let horaFin = match[4];
-
-        // Obtener rango de días
-        const diasOrden = ['L', 'M', 'MI', 'J', 'V', 'S', 'D'];
-        const inicioIndex = diasOrden.indexOf(diaInicio);
-        const finIndex = diasOrden.indexOf(diaFin);
-        
-        if (inicioIndex === -1 || finIndex === -1) {
-          return [];
-        }
-
-        const horarios = [];
-        for (let i = inicioIndex; i <= finIndex; i++) {
-          const diaAbrev = diasOrden[i];
-          if (diasMap[diaAbrev]) {
-            horarios.push({
-              dia: diasMap[diaAbrev],
-              activo: true,
-              inicio: horaInicio,
-              fin: horaFin
-            });
-          }
-        }
-
-        return horarios;
-      }
-    }
-
-    // Si no coincide con ningún patrón, devolver array vacío
-    return [];
   };
 
   // Verificar si está abierto ahora
   const estaAbierto = (horarioString) => {
-    const horarios = parseHorario(horarioString);
-    
-    // Si no hay horarios válidos, considerar cerrado
-    if (!horarios || horarios.length === 0) {
+    try {
+      const horarios = parseHorario(horarioString);
+      
+      if (!horarios || horarios.length === 0) {
+        return false;
+      }
+      
+      const ahora = new Date();
+      const diaSemana = ahora.getDay();
+      const horaActual = ahora.getHours() + ahora.getMinutes() / 60;
+      
+      const diasMap = {
+        0: "Domingo",
+        1: "Lunes", 
+        2: "Martes",
+        3: "Miércoles",
+        4: "Jueves",
+        5: "Viernes",
+        6: "Sábado"
+      };
+      
+      const diaActual = diasMap[diaSemana];
+      const horarioHoy = horarios.find(h => h.dia === diaActual);
+      
+      if (!horarioHoy || !horarioHoy.activo) return false;
+      
+      const [inicioHora, inicioMinuto] = horarioHoy.inicio.split(':').map(Number);
+      const [finHora, finMinuto] = horarioHoy.fin.split(':').map(Number);
+      
+      const inicioTotal = inicioHora + inicioMinuto / 60;
+      const finTotal = finHora + finMinuto / 60;
+      
+      return horaActual >= inicioTotal && horaActual <= finTotal;
+    } catch (error) {
+      console.error('Error verificando horario:', error);
       return false;
     }
-    
-    const ahora = new Date();
-    const diaSemana = ahora.getDay();
-    const horaActual = ahora.getHours() + ahora.getMinutes() / 60;
-    
-    const diasMap = {
-      0: "Domingo",
-      1: "Lunes", 
-      2: "Martes",
-      3: "Miércoles",
-      4: "Jueves",
-      5: "Viernes",
-      6: "Sábado"
-    };
-    
-    const diaActual = diasMap[diaSemana];
-    const horarioHoy = horarios.find(h => h.dia === diaActual);
-    
-    if (!horarioHoy || !horarioHoy.activo) return false;
-    
-    const [inicioHora, inicioMinuto] = horarioHoy.inicio.split(':').map(Number);
-    const [finHora, finMinuto] = horarioHoy.fin.split(':').map(Number);
-    
-    const inicioTotal = inicioHora + inicioMinuto / 60;
-    const finTotal = finHora + finMinuto / 60;
-    
-    return horaActual >= inicioTotal && horaActual <= finTotal;
   };
 
-  // Obtener días de atención para mostrar
+  // Obtener días de atención
   const obtenerDiasAtencion = (horarioString) => {
-    const horarios = parseHorario(horarioString);
-    
-    if (!horarios || horarios.length === 0) {
+    try {
+      const horarios = parseHorario(horarioString);
+      
+      if (!horarios || horarios.length === 0) {
+        return "Horario no disponible";
+      }
+      
+      const diasActivos = horarios.filter(h => h.activo).map(h => h.dia);
+      
+      if (diasActivos.length === 0) return "Cerrado temporalmente";
+      if (diasActivos.length === 7) return "Todos los días";
+      
+      return diasActivos.map(dia => dia.substring(0, 3)).join(', ');
+    } catch (error) {
       return "Horario no disponible";
     }
-    
-    const diasActivos = horarios
-      .filter(h => h.activo)
-      .map(h => h.dia);
-    
-    if (diasActivos.length === 0) {
-      return "Cerrado temporalmente";
-    }
-    
-    // Si está abierto todos los días
-    if (diasActivos.length === 7) {
-      return "Todos los días";
-    }
-    
-    // Si está abierto de lunes a viernes
-    if (diasActivos.length === 5 && 
-        diasActivos.includes('Lunes') && 
-        diasActivos.includes('Martes') && 
-        diasActivos.includes('Miércoles') && 
-        diasActivos.includes('Jueves') && 
-        diasActivos.includes('Viernes')) {
-      return "Lunes a Viernes";
-    }
-    
-    // Si está abierto de lunes a sábado
-    if (diasActivos.length === 6 && 
-        diasActivos.includes('Lunes') && 
-        diasActivos.includes('Martes') && 
-        diasActivos.includes('Miércoles') && 
-        diasActivos.includes('Jueves') && 
-        diasActivos.includes('Viernes') && 
-        diasActivos.includes('Sábado')) {
-      return "Lunes a Sábado";
-    }
-    
-    // En otros casos, mostrar los días específicos
-    return diasActivos.map(dia => dia.substring(0, 3)).join(', ');
   };
 
   // Obtener horario de hoy
   const obtenerHorarioHoy = (horarioString) => {
-    const horarios = parseHorario(horarioString);
-    
-    if (!horarios || horarios.length === 0) {
+    try {
+      const horarios = parseHorario(horarioString);
+      
+      if (!horarios || horarios.length === 0) return "Horario no disponible";
+      
+      const ahora = new Date();
+      const diaSemana = ahora.getDay();
+      
+      const diasMap = {
+        0: "Domingo",
+        1: "Lunes", 
+        2: "Martes",
+        3: "Miércoles",
+        4: "Jueves",
+        5: "Viernes",
+        6: "Sábado"
+      };
+      
+      const diaActual = diasMap[diaSemana];
+      const horarioHoy = horarios.find(h => h.dia === diaActual);
+      
+      if (!horarioHoy || !horarioHoy.activo) return "Cerrado hoy";
+      
+      return `${horarioHoy.inicio} - ${horarioHoy.fin}`;
+    } catch (error) {
       return "Horario no disponible";
     }
-    
-    const ahora = new Date();
-    const diaSemana = ahora.getDay();
-    
-    const diasMap = {
-      0: "Domingo",
-      1: "Lunes", 
-      2: "Martes",
-      3: "Miércoles",
-      4: "Jueves",
-      5: "Viernes",
-      6: "Sábado"
-    };
-    
-    const diaActual = diasMap[diaSemana];
-    const horarioHoy = horarios.find(h => h.dia === diaActual);
-    
-    if (!horarioHoy || !horarioHoy.activo) {
-      return "Cerrado hoy";
-    }
-    
-    return `${horarioHoy.inicio} - ${horarioHoy.fin}`;
   };
 
   // Actualizar ubicación
   const handleActualizarUbicacion = async () => {
     try {
-      let location = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.Balanced,
-      });
-
-      setUserLocation({
-        latitude: location.coords.latitude,
-        longitude: location.coords.longitude,
-      });
-
-      setLocationError(null);
+      await getLocation();
       Alert.alert("Éxito", "Ubicación actualizada correctamente");
     } catch (error) {
       console.error("Error updating location:", error);
@@ -404,35 +314,46 @@ export default function HomeScreen({ navigation }) {
     }
   };
 
+  // Pull to refresh
+  const onRefresh = () => {
+    setRefreshing(true);
+    fetchNegocios();
+    getLocation();
+  };
+
   // Filtrar negocios
   const negociosFiltrados = empresas
     .filter((empresa) => {
-      if (!userLocation) return true;
+      if (!empresa || !empresa.Nombre) return false;
 
-      const distancia = calculateDistance(
-        userLocation.latitude,
-        userLocation.longitude,
-        parseFloat(empresa.CoordenadasLat),
-        parseFloat(empresa.CoordenadasLng)
-      );
-
+      // Filtro de búsqueda
       const coincideBusqueda =
         empresa.Nombre.toLowerCase().includes(search.toLowerCase()) ||
-        empresa.Descripcion.toLowerCase().includes(search.toLowerCase()) ||
-        categoriasMap[empresa.IdCategoria]
-          ?.toLowerCase()
-          .includes(search.toLowerCase());
+        (empresa.Descripcion && empresa.Descripcion.toLowerCase().includes(search.toLowerCase())) ||
+        (categoriasMap[empresa.IdCategoria] && 
+         categoriasMap[empresa.IdCategoria].toLowerCase().includes(search.toLowerCase()));
 
+      // Filtro de categoría
       const coincideCategoria =
         selectedCategoria === "todas" ||
         empresa.IdCategoria.toString() === selectedCategoria;
 
-      const dentroDeRango = distancia <= parseFloat(selectedKm);
+      // Filtro de distancia
+      let dentroDeRango = true;
+      if (userLocation && empresa.CoordenadasLat && empresa.CoordenadasLng) {
+        const distancia = calculateDistance(
+          userLocation.latitude,
+          userLocation.longitude,
+          parseFloat(empresa.CoordenadasLat),
+          parseFloat(empresa.CoordenadasLng)
+        );
+        dentroDeRango = distancia <= parseFloat(selectedKm);
+      }
 
       return coincideBusqueda && coincideCategoria && dentroDeRango;
     })
     .map((empresa) => {
-      const distancia = userLocation
+      const distancia = userLocation && empresa.CoordenadasLat && empresa.CoordenadasLng
         ? calculateDistance(
             userLocation.latitude,
             userLocation.longitude,
@@ -519,14 +440,24 @@ export default function HomeScreen({ navigation }) {
 
   return (
     <View style={[styles.container, themeStyles.container]}>
-      {/* HEADER */}
       <Header 
-  isDarkMode={isDarkMode} 
-  setIsDarkMode={setIsDarkMode} 
-  themeStyles={themeStyles}
-  onPressNotifications={() => navigation.navigate('NotificationsScreen')}
-/>
-      <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
+        isDarkMode={isDarkMode} 
+        setIsDarkMode={setIsDarkMode} 
+        themeStyles={themeStyles}
+        onPressNotifications={() => navigation.navigate('NotificationsScreen')}
+      />
+      
+      <ScrollView 
+        contentContainerStyle={{ paddingBottom: 40 }}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={['#007AFF']}
+            tintColor="#007AFF"
+          />
+        }
+      >
         {/* UBICACIÓN */}
         <LocationStatus
           themeStyles={themeStyles}
@@ -561,7 +492,7 @@ export default function HomeScreen({ navigation }) {
             <Text style={[styles.resultsTitle, themeStyles.text]}>
               {userLocation
                 ? `Empresas cercanas (${negociosFiltrados.length})`
-                : "Empresas"}
+                : `Empresas (${negociosFiltrados.length})`}
             </Text>
 
             {userLocation && (
@@ -586,12 +517,17 @@ export default function HomeScreen({ navigation }) {
                   { marginBottom: 16 }
                 ]}>
                   {/* Imagen del negocio */}
-                  {empresa.LinkUrl && (
+                  {empresa.LinkUrl ? (
                     <Image 
                       source={{ uri: empresa.LinkUrl }}
                       style={localStyles.businessImage}
                       resizeMode="cover"
+                      onError={(e) => console.log('Error cargando imagen:', e.nativeEvent.error)}
                     />
+                  ) : (
+                    <View style={localStyles.placeholderImage}>
+                      <Ionicons name="business" size={40} color="#666" />
+                    </View>
                   )}
                   
                   <View style={localStyles.businessContent}>
@@ -599,7 +535,7 @@ export default function HomeScreen({ navigation }) {
                     <View style={localStyles.businessHeader}>
                       <View style={localStyles.nameContainer}>
                         <Text style={[localStyles.businessName, themeStyles.text]}>
-                          {empresa.Nombre}
+                          {empresa.Nombre || 'Nombre no disponible'}
                         </Text>
                         <View style={localStyles.statusContainer}>
                           <View style={[
@@ -629,10 +565,10 @@ export default function HomeScreen({ navigation }) {
                       <View style={localStyles.categoryTag}>
                         <Ionicons name="pricetag" size={14} color="#666" />
                         <Text style={localStyles.categoryText}>
-                          {categoriasMap[empresa.IdCategoria]}
+                          {categoriasMap[empresa.IdCategoria] || 'Sin categoría'}
                         </Text>
                       </View>
-                      {userLocation && (
+                      {userLocation && empresa.distancia > 0 && (
                         <View style={localStyles.distanceTag}>
                           <Ionicons name="location" size={14} color="#666" />
                           <Text style={localStyles.distanceText}>
@@ -647,7 +583,7 @@ export default function HomeScreen({ navigation }) {
                       style={[localStyles.businessDescription, themeStyles.textSecondary]}
                       numberOfLines={2}
                     >
-                      {empresa.Descripcion}
+                      {empresa.Descripcion || 'Sin descripción'}
                     </Text>
 
                     {/* Información de horarios */}
@@ -668,18 +604,22 @@ export default function HomeScreen({ navigation }) {
 
                     {/* Información de contacto */}
                     <View style={localStyles.contactContainer}>
-                      <View style={localStyles.contactItem}>
-                        <Ionicons name="call" size={14} color="#666" />
-                        <Text style={[localStyles.contactText, themeStyles.textSecondary]}>
-                          {empresa.TelefonoContacto}
-                        </Text>
-                      </View>
-                      <View style={localStyles.contactItem}>
-                        <Ionicons name="mail" size={14} color="#666" />
-                        <Text style={[localStyles.contactText, themeStyles.textSecondary]}>
-                          {empresa.CorreoContacto}
-                        </Text>
-                      </View>
+                      {empresa.TelefonoContacto && (
+                        <View style={localStyles.contactItem}>
+                          <Ionicons name="call" size={14} color="#666" />
+                          <Text style={[localStyles.contactText, themeStyles.textSecondary]}>
+                            {empresa.TelefonoContacto}
+                          </Text>
+                        </View>
+                      )}
+                      {empresa.CorreoContacto && (
+                        <View style={localStyles.contactItem}>
+                          <Ionicons name="mail" size={14} color="#666" />
+                          <Text style={[localStyles.contactText, themeStyles.textSecondary]}>
+                            {empresa.CorreoContacto}
+                          </Text>
+                        </View>
+                      )}
                     </View>
 
                     {/* Botones de acción */}
@@ -708,18 +648,19 @@ export default function HomeScreen({ navigation }) {
             <View style={styles.noResults}>
               <Ionicons name="business-outline" size={64} color="#666" />
               <Text style={[styles.noResultsText, themeStyles.text]}>
-                {userLocation
-                  ? "No se encontraron negocios con los filtros aplicados"
-                  : "Esperando ubicación..."}
+                No se encontraron negocios
               </Text>
-
-              {(search ||
-                selectedCategoria !== "todas" ||
-                selectedKm !== "2") && (
-                <Text style={[styles.noResultsSubtext, themeStyles.text]}>
-                  Intenta con otros filtros o limpia los filtros
-                </Text>
-              )}
+              <Text style={[styles.noResultsSubtext, themeStyles.text]}>
+                {search || selectedCategoria !== "todas" || selectedKm !== "2" 
+                  ? "Intenta con otros filtros o limpia los filtros"
+                  : "No hay negocios disponibles en este momento"}
+              </Text>
+              <TouchableOpacity 
+                style={localStyles.retryButton}
+                onPress={fetchNegocios}
+              >
+                <Text style={localStyles.retryButtonText}>Reintentar</Text>
+              </TouchableOpacity>
             </View>
           )}
         </View>
@@ -744,6 +685,13 @@ const localStyles = StyleSheet.create({
   businessImage: {
     width: '100%',
     height: 160,
+  },
+  placeholderImage: {
+    width: '100%',
+    height: 160,
+    backgroundColor: '#f0f0f0',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   businessContent: {
     padding: 16,
@@ -876,5 +824,16 @@ const localStyles = StyleSheet.create({
     color: '#FFFFFF',
     fontWeight: '600',
     marginLeft: 6,
+  },
+  retryButton: {
+    backgroundColor: '#007AFF',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 8,
+    marginTop: 10,
+  },
+  retryButtonText: {
+    color: '#FFFFFF',
+    fontWeight: '600',
   },
 });

@@ -31,7 +31,7 @@ moment.locale('es', {
 moment.locale('es');
 
 // Configuración API
-const API_BASE_URL = 'https://f735b4d5b059.ngrok-free.app/api';
+const API_BASE_URL = 'https://nearbizbackend3.vercel.app/api/citas';
 
 export default function DateScreen() {
   const route = useRoute();

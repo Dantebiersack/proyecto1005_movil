@@ -1,12 +1,12 @@
 {
   "expo": {
-    "name": "MiPrimerAppRN",
-    "slug": "MiPrimerAppRN",
+    "name": "NearBiz",
+    "slug": "nearbiz-app",
+    "owner": "josue2684",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "newArchEnabled": true,
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
@@ -20,10 +20,25 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.josue0312.MiPrimerAppRN",
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION"
+      ],
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyAe0aa1yhdltLUc96l1DI_i1AuHT_-UzK8"
+        }
+      }
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "f3163625-8821-4bd2-ac34-9c6ba743e854"
+      }
     }
   }
 }

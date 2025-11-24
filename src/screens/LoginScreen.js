@@ -49,13 +49,13 @@ const handleLogin = async () => {
     }
 
     const data = await response.json();
-    console.log('Respuesta completa del servidor:', data);
+    ('Respuesta completa del servidor:', data);
 
-    // ✅ MANEJO SEGURO DE ASYNCSTORAGE - Verificar que los datos existen
+    //  MANEJO SEGURO DE ASYNCSTORAGE - Verificar que los datos existen
  const userToken = data.token || data.Token || data.user?.Token || data.usuario?.Token;
 if (userToken) {
   await AsyncStorage.setItem('userToken', userToken);
-  console.log('Token guardado:', userToken);
+  ('Token guardado:', userToken);
 } else {
   console.warn('No se recibió token en la respuesta');
 }
@@ -64,14 +64,14 @@ if (userToken) {
 
     if (data.user) {
       await AsyncStorage.setItem('userData', JSON.stringify(data.user));
-      console.log('Usuario guardado:', data.user);
+      ('Usuario guardado:', data.user);
     } else {
       // Si no viene user, pero viene otro campo con la información del usuario
       // Buscar cualquier campo que pueda contener la información del usuario
       const userData = data.usuario || data.userData || data;
       if (userData && userData.IdUsuario) {
         await AsyncStorage.setItem('userData', JSON.stringify(userData));
-        console.log('Usuario guardado (formato alternativo):', userData);
+        ('Usuario guardado (formato alternativo):', userData);
       } else {
         throw new Error('No se recibió información del usuario en la respuesta');
       }
@@ -81,8 +81,8 @@ if (userToken) {
     const savedToken = await AsyncStorage.getItem('userToken');
     const savedUser = await AsyncStorage.getItem('userData');
     
-    console.log('Token guardado en AsyncStorage:', savedToken);
-    console.log('Usuario guardado en AsyncStorage:', savedUser);
+    ('Token guardado en AsyncStorage:', savedToken);
+    ('Usuario guardado en AsyncStorage:', savedUser);
     
     navigation.navigate("Home");
 

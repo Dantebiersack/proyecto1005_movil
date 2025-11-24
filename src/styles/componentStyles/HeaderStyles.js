@@ -9,17 +9,8 @@ export default StyleSheet.create({
     justifyContent: "space-between",
     paddingVertical: 16,
     paddingHorizontal: 20,
-    backgroundColor: "#FFFFFF",
-    
-    // Sombra inferior
-    shadowColor: "#0A2A66",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.04,
-    shadowRadius: 8,
-    elevation: 4,
+    // ❌ REMOVIMOS: backgroundColor y sombras fijas
+    // ✅ Ahora se controlan por el tema
     zIndex: 1000,
   },
 
@@ -33,33 +24,39 @@ export default StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 12,
-    backgroundColor: "#0A2A66", // Placeholder color
   },
 
   companyName: {
     fontSize: 24,
     fontWeight: "800",
-    color: "#0A2A66",
     letterSpacing: -0.5,
+    // ❌ REMOVIMOS: color fijo
+    // ✅ Ahora se controla por themeStyles.text
+  },
+
+  iconsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+
+  iconButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    justifyContent: 'center',
+    alignItems: 'center',
+    // El color de fondo ahora se controla por el tema
   },
 
   themeButton: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: "#F8FAFF",
     justifyContent: 'center',
     alignItems: 'center',
-    
-    // Sombra botón
-    shadowColor: "#0A2A66",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    // ❌ REMOVIMOS: backgroundColor y sombras fijas
+    // ✅ Ahora se controlan por themeStyles.themeButton
   },
 
   // 🆕 Badge de notificaciones

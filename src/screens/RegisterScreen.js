@@ -41,7 +41,7 @@ export default function RegisterScreen({ navigation }) {
     setLoading(true);
 
     try {
-      console.log('📤 Enviando datos de registro:', {
+      ('📤 Enviando datos de registro:', {
         Nombre: nombre,
         Email: email,
         ContrasenaHash: contrasena,
@@ -56,19 +56,19 @@ export default function RegisterScreen({ navigation }) {
           "Accept": "application/json"
         },
         body: JSON.stringify({
-          Nombre: nombre,           // ✅ PascalCase
-          Email: email,             // ✅ PascalCase  
-          ContrasenaHash: contrasena, // ✅ PascalCase (corregido)
-          IdRol: 4,                 // ✅ PascalCase
-          Token: null               // ✅ PascalCase
+          Nombre: nombre,           //  PascalCase
+          Email: email,             //  PascalCase  
+          ContrasenaHash: contrasena, //  PascalCase (corregido)
+          IdRol: 4,                 //  PascalCase
+          Token: null               //  PascalCase
         }),
       });
 
-      console.log('📨 Respuesta del servidor - Status:', response.status);
+      ('📨 Respuesta del servidor - Status:', response.status);
       
       if (response.ok) {
         const data = await response.json();
-        console.log('✅ Registro exitoso:', data);
+        (' Registro exitoso:', data);
         
         Alert.alert(
           "Registro exitoso", 
@@ -77,7 +77,7 @@ export default function RegisterScreen({ navigation }) {
         );
       } else {
         const errorText = await response.text();
-        console.error('❌ Error en registro:', errorText);
+        console.error(' Error en registro:', errorText);
         
         let mensajeError = "No se pudo registrar. Intenta nuevamente.";
         
@@ -90,7 +90,7 @@ export default function RegisterScreen({ navigation }) {
         Alert.alert("Error", mensajeError);
       }
     } catch (error) {
-      console.error('❌ Error de conexión:', error);
+      console.error(' Error de conexión:', error);
       Alert.alert("Error", "No se pudo conectar con el servidor. Verifica tu conexión.");
     } finally {
       setLoading(false);

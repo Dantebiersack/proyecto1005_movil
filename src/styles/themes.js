@@ -46,6 +46,25 @@ export const lightTheme = StyleSheet.create({
   },
   accent: {
     color: ACCENT,
+  },
+  // 🆕 ESTILOS ESPECÍFICOS PARA HEADER
+  header: {
+    backgroundColor: CARD_BG,
+    shadowColor: PRIMARY,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  themeButton: {
+    backgroundColor: "#F8FAFF",
+    shadowColor: PRIMARY,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  iconButton: {
+    // Estilo base para botones de icono en modo claro
   }
 });
 
@@ -80,5 +99,26 @@ export const darkTheme = StyleSheet.create({
   },
   accent: {
     color: "#60A5FA",
+  },
+  // 🆕 ESTILOS ESPECÍFICOS PARA HEADER EN MODO OSCURO
+  header: {
+    backgroundColor: "#1E293B",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
+    borderBottomWidth: 1,
+    borderBottomColor: "#334155",
+  },
+  themeButton: {
+    backgroundColor: "#334155",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+  },
+  iconButton: {
+    // Estilo base para botones de icono en modo oscuro
   }
 });

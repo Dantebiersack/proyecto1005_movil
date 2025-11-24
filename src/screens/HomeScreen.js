@@ -520,13 +520,12 @@ export default function HomeScreen({ navigation }) {
   return (
     <View style={[styles.container, themeStyles.container]}>
       {/* HEADER */}
-      <Header
-        isDarkMode={isDarkMode}
-        setIsDarkMode={setIsDarkMode}
-        themeStyles={themeStyles}
-        onPressNotifications={() => navigation.navigate("NotificationsScreen")} 
-      />
-
+      <Header 
+  isDarkMode={isDarkMode} 
+  setIsDarkMode={setIsDarkMode} 
+  themeStyles={themeStyles}
+  onPressNotifications={() => navigation.navigate('NotificationsScreen')}
+/>
       <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
         {/* UBICACIÓN */}
         <LocationStatus

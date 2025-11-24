@@ -46,7 +46,7 @@ const probarCambioEstatusCita = async () => {
       }
     );
     
-    console.log('Respuesta del backend:', response.data);
+    ('Respuesta del backend:', response.data);
     Alert.alert('Éxito', 'Solicitud enviada. Deberías recibir una notificación pronto.');
     
   } catch (error) {

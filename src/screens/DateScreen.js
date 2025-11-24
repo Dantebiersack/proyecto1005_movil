@@ -75,17 +75,17 @@ export default function DateScreen() {
   // OBTENER CLIENTE POR ID USUARIO
   const obtenerClientePorUsuario = async (idUsuario) => {
     try {
-      console.log('🔍 Buscando cliente para IdUsuario:', idUsuario);
+      ('🔍 Buscando cliente para IdUsuario:', idUsuario);
       
       const response = await axios.get(`${API_BASE_URL}/clientes`);
-      console.log('📋 Todos los clientes:', response.data);
+      ('📋 Todos los clientes:', response.data);
       
       // Buscar cliente que coincida con el IdUsuario
       const clienteEncontrado = response.data.find(
         cliente => Number(cliente.IdUsuario) === Number(idUsuario)
       );
       
-      console.log('✅ Cliente encontrado:', clienteEncontrado);
+      (' Cliente encontrado:', clienteEncontrado);
       
       if (clienteEncontrado) {
         return {
@@ -95,11 +95,11 @@ export default function DateScreen() {
         };
       }
       
-      console.log('❌ No se encontró cliente para IdUsuario:', idUsuario);
+      (' No se encontró cliente para IdUsuario:', idUsuario);
       return null;
       
     } catch (error) {
-      console.error('❌ Error obteniendo cliente:', error);
+      console.error(' Error obteniendo cliente:', error);
       return null;
     }
   };
@@ -117,7 +117,7 @@ export default function DateScreen() {
 
   // FUNCIÓN MEJORADA PARA GENERAR HORARIOS DESDE TEXTO PLANO
   const generarHorariosDesdeTexto = (horarioTexto) => {
-    console.log('📝 Generando horarios desde texto:', horarioTexto);
+    ('📝 Generando horarios desde texto:', horarioTexto);
     
     // Múltiples patrones para extraer horarios
     const patrones = [
@@ -143,7 +143,7 @@ export default function DateScreen() {
           
           // Validar formato de hora
           if (!moment(inicio, 'HH:mm', true).isValid() || !moment(fin, 'HH:mm', true).isValid()) {
-            console.log('❌ Formato de hora inválido, continuando con siguiente patrón');
+            (' Formato de hora inválido, continuando con siguiente patrón');
             continue;
           }
         } else if (patron === patrones[2]) {
@@ -157,20 +157,20 @@ export default function DateScreen() {
           fin = convertir12a24(horaFin, periodoFin);
         }
         
-        console.log('⏰ Horarios extraídos:', { inicio, fin });
+        ('⏰ Horarios extraídos:', { inicio, fin });
         
         return generarHorariosRango(inicio, fin);
       }
     }
     
     // Si no se puede extraer, usar horarios por defecto
-    console.log('❌ No se pudieron extraer horarios del texto, usando por defecto');
+    (' No se pudieron extraer horarios del texto, usando por defecto');
     return generarHorariosPorDefecto();
   };
 
   // FUNCIÓN CORREGIDA PARA GENERAR HORARIOS DESDE EL HORARIO DE ATENCIÓN ESTRUCTURADO
   const generarHorariosDesdeHorarioAtencion = (horarioAtencion) => {
-    console.log('🔄 Generando horarios desde horario estructurado:', horarioAtencion);
+    ('🔄 Generando horarios desde horario estructurado:', horarioAtencion);
     
     // Si es un array (formato JSON estructurado)
     if (Array.isArray(horarioAtencion)) {
@@ -178,15 +178,15 @@ export default function DateScreen() {
       let diaActual;
       try {
         diaActual = moment().locale('es').format('dddd').toLowerCase();
-        console.log('📅 Día actual (español):', diaActual);
+        ('📅 Día actual (español):', diaActual);
       } catch (error) {
-        console.error('❌ Error obteniendo día actual:', error);
+        console.error(' Error obteniendo día actual:', error);
         // Si falla, intentar con inglés como fallback
         try {
           diaActual = moment().locale('en').format('dddd').toLowerCase();
-          console.log('📅 Día actual (inglés fallback):', diaActual);
+          ('📅 Día actual (inglés fallback):', diaActual);
         } catch (error2) {
-          console.error('❌ Error completo obteniendo día:', error2);
+          console.error(' Error completo obteniendo día:', error2);
           diaActual = 'lunes'; // Valor por defecto
         }
       }
@@ -212,7 +212,7 @@ export default function DateScreen() {
       };
       
       const diaActualNormalizado = diasMap[diaActual] || 'lunes';
-      console.log('📅 Día actual normalizado:', diaActualNormalizado);
+      ('📅 Día actual normalizado:', diaActualNormalizado);
       
       // Función auxiliar para normalizar texto (quitar acentos)
       const normalizarTexto = (texto) => {
@@ -227,23 +227,23 @@ export default function DateScreen() {
         return diaHorarioNormalizado === diaActualNormalizadoSinAcentos;
       });
       
-      console.log('🔍 Horario encontrado para hoy:', horarioHoy);
+      ('🔍 Horario encontrado para hoy:', horarioHoy);
       
       if (horarioHoy && horarioHoy.activo !== false) {
         const inicio = horarioHoy.inicio || '09:00';
         const fin = horarioHoy.fin || '18:00';
         
-        console.log('⏰ Generando horarios desde:', inicio, 'hasta:', fin);
+        ('⏰ Generando horarios desde:', inicio, 'hasta:', fin);
         return generarHorariosRango(inicio, fin);
       } else {
         // Si el negocio está cerrado hoy, buscar el próximo día abierto
-        console.log('🔍 Buscando próximo día abierto...');
+        ('🔍 Buscando próximo día abierto...');
         for (let i = 1; i <= 7; i++) {
           let proximoDia;
           try {
             proximoDia = moment().add(i, 'days').locale('es').format('dddd').toLowerCase();
           } catch (error) {
-            console.error('❌ Error obteniendo próximo día:', error);
+            console.error(' Error obteniendo próximo día:', error);
             continue;
           }
           
@@ -261,7 +261,7 @@ export default function DateScreen() {
             const inicio = horarioProximoDia.inicio || '09:00';
             const fin = horarioProximoDia.fin || '18:00';
             
-            console.log('✅ Próximo día abierto:', proximoDiaNormalizado, 'de', inicio, 'a', fin);
+            (' Próximo día abierto:', proximoDiaNormalizado, 'de', inicio, 'a', fin);
             return generarHorariosRango(inicio, fin);
           }
         }
@@ -269,7 +269,7 @@ export default function DateScreen() {
     }
     
     // Si no se pudo generar desde el formato estructurado, usar por defecto
-    console.log('❌ No se pudo generar desde formato estructurado, usando por defecto');
+    (' No se pudo generar desde formato estructurado, usando por defecto');
     return generarHorariosPorDefecto();
   };
 
@@ -282,7 +282,7 @@ export default function DateScreen() {
     const finMoment = moment(fin, 'HH:mm');
     
     if (!inicioMoment.isValid() || !finMoment.isValid()) {
-      console.log('❌ Formatos de hora inválidos, usando horarios por defecto');
+      (' Formatos de hora inválidos, usando horarios por defecto');
       return generarHorariosPorDefecto();
     }
     
@@ -298,13 +298,13 @@ export default function DateScreen() {
       horarioActual.add(15, 'minutes');
     }
     
-    console.log(`🕐 Generados ${horarios.length} horarios de ${inicio} a ${fin}`);
+    (`🕐 Generados ${horarios.length} horarios de ${inicio} a ${fin}`);
     return horarios;
   };
 
   // FUNCIÓN PARA GENERAR HORARIOS POR DEFECTO
   const generarHorariosPorDefecto = () => {
-    console.log('⚡ Usando horarios por defecto');
+    ('⚡ Usando horarios por defecto');
     return [
       '08:00','08:15','08:30','08:45','09:00','09:15','09:30','09:45',
       '10:00','10:15','10:30','10:45','11:00','11:15','11:30','11:45',
@@ -319,25 +319,25 @@ export default function DateScreen() {
     try {
       setLoadingHorarios(true);
       
-      console.log('🕐 Obteniendo horarios disponibles para negocio ID:', idNegocio);
+      ('🕐 Obteniendo horarios disponibles para negocio ID:', idNegocio);
       
       // Hacer la petición a la API para obtener los datos del negocio específico
       const response = await axios.get(`${API_BASE_URL}/Negocios/${idNegocio}`);
       const negocioData = response.data;
       
-      console.log('📊 Datos del negocio recibidos:', negocioData);
+      ('📊 Datos del negocio recibidos:', negocioData);
       
       if (negocioData && negocioData.HorarioAtencion) {
-        console.log('📅 Horario de atención encontrado:', negocioData.HorarioAtencion);
+        ('📅 Horario de atención encontrado:', negocioData.HorarioAtencion);
         
         // Parsear el JSON string si es necesario
         let horarioAtencion;
         if (typeof negocioData.HorarioAtencion === 'string') {
           try {
             horarioAtencion = JSON.parse(negocioData.HorarioAtencion);
-            console.log('✅ Horario parseado como JSON:', horarioAtencion);
+            (' Horario parseado como JSON:', horarioAtencion);
           } catch (parseError) {
-            console.log('📝 Horario es texto plano:', negocioData.HorarioAtencion);
+            ('📝 Horario es texto plano:', negocioData.HorarioAtencion);
             // Si es texto plano, generar horarios basados en el texto
             const horariosGenerados = generarHorariosDesdeTexto(negocioData.HorarioAtencion);
             setHorariosDisponibles(horariosGenerados);
@@ -351,17 +351,17 @@ export default function DateScreen() {
         const horariosGenerados = generarHorariosDesdeHorarioAtencion(horarioAtencion);
         setHorariosDisponibles(horariosGenerados);
         
-        console.log('✅ Horarios disponibles generados:', horariosGenerados);
+        (' Horarios disponibles generados:', horariosGenerados);
       } else {
-        console.log('❌ No se encontró horario de atención, usando horarios por defecto');
+        (' No se encontró horario de atención, usando horarios por defecto');
         // Usar horarios por defecto si no hay horario específico
         setHorariosDisponibles(generarHorariosPorDefecto());
       }
       
     } catch (error) {
-      console.error('❌ Error obteniendo horarios disponibles:', error);
-      console.log('🔴 Error details:', error.response?.data || error.message);
-      console.log('🔄 Usando horarios por defecto debido al error');
+      console.error(' Error obteniendo horarios disponibles:', error);
+      ('🔴 Error details:', error.response?.data || error.message);
+      ('🔄 Usando horarios por defecto debido al error');
       // En caso de error, usar horarios por defecto
       setHorariosDisponibles(generarHorariosPorDefecto());
     } finally {
@@ -378,10 +378,10 @@ export default function DateScreen() {
       
       try {
         setLoadingData(true);
-        console.log('🚀 Iniciando carga de datos para negocio:', empresa.Nombre, 'ID:', empresa.IdNegocio);
+        ('🚀 Iniciando carga de datos para negocio:', empresa.Nombre, 'ID:', empresa.IdNegocio);
 
         const usuario = await obtenerUsuarioAutenticado();
-        console.log('👤 Usuario autenticado:', usuario);
+        ('👤 Usuario autenticado:', usuario);
         
         if (!usuario) {
           Alert.alert(
@@ -405,21 +405,21 @@ export default function DateScreen() {
           return;
         }
 
-        console.log('✅ Cliente asignado:', cliente);
+        (' Cliente asignado:', cliente);
         setClienteActual(cliente);
 
         // CARGAR SERVICIOS
-        console.log('📦 Cargando servicios para negocio ID:', empresa.IdNegocio);
+        ('📦 Cargando servicios para negocio ID:', empresa.IdNegocio);
         const serviciosRes = await axios.get(`${API_BASE_URL}/servicios?idNegocio=${empresa.IdNegocio}`);
-        console.log('✅ Servicios cargados:', serviciosRes.data);
+        (' Servicios cargados:', serviciosRes.data);
         
         if (!isMounted) return;
         setServicios(serviciosRes.data);
 
         // CARGAR TÉCNICOS
-        console.log('👥 Cargando técnicos para negocio ID:', empresa.IdNegocio);
+        ('👥 Cargando técnicos para negocio ID:', empresa.IdNegocio);
         const personalRes = await axios.get(`${API_BASE_URL}/Personal/by-negocio/${empresa.IdNegocio}`);
-        console.log('✅ Técnicos cargados:', personalRes.data);
+        (' Técnicos cargados:', personalRes.data);
         
         if (!isMounted) return;
         const tecnicosConNombres = personalRes.data.map(persona => ({
@@ -432,7 +432,7 @@ export default function DateScreen() {
         setTecnicos(tecnicosConNombres);
 
         // OBTENER HORARIOS DISPONIBLES DESDE LA API
-        console.log('🕐 Obteniendo horarios disponibles...');
+        ('🕐 Obteniendo horarios disponibles...');
         await obtenerHorariosDisponibles(empresa.IdNegocio);
 
         if (!isMounted) return;
@@ -440,7 +440,7 @@ export default function DateScreen() {
         // Establecer valores por defecto SOLO si hay datos
         if (serviciosRes.data.length > 0) {
           setSelectedServicio(serviciosRes.data[0]);
-          console.log('🎯 Servicio por defecto:', serviciosRes.data[0]);
+          ('🎯 Servicio por defecto:', serviciosRes.data[0]);
         } else {
           Alert.alert(
             'Sin servicios',
@@ -452,13 +452,13 @@ export default function DateScreen() {
         
         if (tecnicosConNombres.length > 0) {
           setSelectedTecnico(tecnicosConNombres[0]);
-          console.log('🎯 Técnico por defecto:', tecnicosConNombres[0]);
+          ('🎯 Técnico por defecto:', tecnicosConNombres[0]);
         }
 
-        console.log('✅ Carga de datos completada exitosamente');
+        (' Carga de datos completada exitosamente');
 
       } catch (error) {
-        console.error('❌ Error cargando datos iniciales:', error);
+        console.error(' Error cargando datos iniciales:', error);
         if (isMounted) {
           Alert.alert('Error', 'No se pudieron cargar los datos del negocio');
         }
@@ -548,8 +548,8 @@ export default function DateScreen() {
 
   // CONFIRMAR CITA
   const confirmarCita = async () => {
-    console.log('🔍 INICIANDO CONFIRMACIÓN DE CITA');
-    console.log('📋 Estado actual:', {
+    ('🔍 INICIANDO CONFIRMACIÓN DE CITA');
+    ('📋 Estado actual:', {
       selectedTecnico: selectedTecnico?.IdPersonal,
       selectedDate: selectedDate?.format('YYYY-MM-DD'),
       selectedTime: selectedTime,
@@ -573,7 +573,7 @@ export default function DateScreen() {
       const horaFin = horaFinMoment.format('HH:mm:ss');
 
       // VERIFICAR DISPONIBILIDAD DEL TÉCNICO
-      console.log('🔍 Verificando disponibilidad del técnico...');
+      ('🔍 Verificando disponibilidad del técnico...');
       
       const citasTecnicoRes = await axios.get(
         `${API_BASE_URL}/citas?idTecnico=${selectedTecnico.IdPersonal}`
@@ -585,7 +585,7 @@ export default function DateScreen() {
         cita.Estado !== 'rechazada'
       );
 
-      console.log('📅 Citas existentes del técnico:', citasExistentes);
+      ('📅 Citas existentes del técnico:', citasExistentes);
 
       // Verificar solapamiento
       const haySolapamiento = citasExistentes.some(citaExistente => {
@@ -607,7 +607,7 @@ export default function DateScreen() {
 
       if (haySolapamiento) {
         Alert.alert(
-          'Horario No Disponible ❌',
+          'Horario No Disponible ',
           `El técnico ${selectedTecnico.Nombre} ya tiene una cita programada en este horario.\n\nPor favor, selecciona otro horario o técnico.`,
           [{ text: 'Entendido' }]
         );
@@ -615,7 +615,7 @@ export default function DateScreen() {
         return;
       }
 
-      console.log('✅ Horario disponible, procediendo a crear cita...');
+      (' Horario disponible, procediendo a crear cita...');
 
       // FORMATO CORRECTO PARA EL BACKEND
       const nuevaCita = {
@@ -629,7 +629,7 @@ export default function DateScreen() {
         motivoCancelacion: null
       };
 
-      console.log('📤 ENVIANDO CITA:', JSON.stringify(nuevaCita, null, 2));
+      ('📤 ENVIANDO CITA:', JSON.stringify(nuevaCita, null, 2));
 
       const response = await axios.post(`${API_BASE_URL}/citas`, nuevaCita, {
         timeout: 15000,
@@ -639,7 +639,7 @@ export default function DateScreen() {
         }
       });
 
-      console.log('✅ CITA CREADA EXITOSAMENTE:', response.data);
+      (' CITA CREADA EXITOSAMENTE:', response.data);
 
       Alert.alert(
         '¡Cita Agendada! 🎉',
@@ -648,7 +648,7 @@ export default function DateScreen() {
       );
 
     } catch (error) {
-      console.error('❌ ERROR AL CREAR CITA:', {
+      console.error(' ERROR AL CREAR CITA:', {
         mensaje: error.message,
         respuesta: error.response?.data,
         estado: error.response?.status,

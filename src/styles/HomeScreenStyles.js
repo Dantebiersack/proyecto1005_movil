@@ -43,7 +43,7 @@ export default StyleSheet.create({
     color: "#64748B",
   },
 
-  // ❌ No Results
+  //  No Results
   noResults: {
     alignItems: "center",
     paddingVertical: 60,

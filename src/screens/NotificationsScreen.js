@@ -52,7 +52,7 @@ export default function NotificationsScreen() {
   const setupNotificationListener = () => {
     // Escuchar notificaciones entrantes sobre citas
     notificationListener.current = Notifications.addNotificationReceivedListener(notification => {
-      console.log('📱 Notificación recibida:', notification);
+      ('📱 Notificación recibida:', notification);
       
       // Cuando llega una notificación, recargar las citas
       if (idUsuario) {
@@ -229,7 +229,7 @@ export default function NotificationsScreen() {
 
                 <View style={styles.footer}>
                   <Text style={styles.footerText}>
-                    {cita.Estado === 'confirmada' ? '✅ Tu cita está confirmada' : '❌ Cita no disponible'}
+                    {cita.Estado === 'confirmada' ? ' Tu cita está confirmada' : ' Cita no disponible'}
                   </Text>
                 </View>
               </View>
